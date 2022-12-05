@@ -1,1 +1,18 @@
+---
+title: "R Syntax Examples"
+author: "Nathan Young"
+output: pdf_document
+---
 
+# R Nuts and Bolts
+## Entering Input
+We type expressions into the R prompt. 
+The <- symbol is the assignment operator
+```{r}
+x <- 5 # Assignment of value to variable
+print(x) # Explicit printing
+x # auto-printing
+y <- 10:20
+```
+When [1] is printed it indicates that x is a vector and that 5 is the first element
+The : operator is used to create integer sequences
