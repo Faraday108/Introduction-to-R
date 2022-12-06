@@ -209,3 +209,53 @@ Arguments:
 - colClasses, character vector indicating the class of each column
 - nrows, number of rows. Default reads whole file
 - comment.char, chacter string indicating comment character. 
+- skip, number of lines to skip from beginning
+- stringsAsFactors, should character variables be coded as factors? defaults to True. 
+
+For small to moderate size, you can usually call read.table
+```{r}
+data <- read.table("foo.txt")
+```
+- In this case, R will automatically skip lines that begin with #
+- figure out how many rows there are and how much mem is needed. 
+- figure out type of variable in each column. 
+
+Telling R these things directly makes R faster and more efficient. 
+
+## Reading in larger data sets with read.table
+With larger data sets, make life easier and prevent R from choking by: 
+- Read the help page for read.table
+- Make a rough calculation of the memory required to store your dataset. If dataset is larger than RAM, stop. 
+- set comment.char = "" if no commented lines in file
+- Use colClasses argument. Specifing this can make it run **much** faster, often twice as fast. 
+
+```{r}
+initial <- read.table("datatable.txt",nrows=100)
+classes <- sapply(initial,class)
+tabAll <- read.table("datatable.txt",colClasses=classes)
+```
+- set nrows. Doesn't make faster but helps with memory. 
+
+Also useful to know about your system. 
+- How much mem is available? 
+- Can you close other applications? 
+- Are there other users logged in? 
+- What OS are you using? Some limit amount of memory. 
+
+## Calculating Memory Requirements for R Objects
+Because R stores all objects in physical memory, important to keep limits in mind. Especially when reading in a new dataset to R. BOTE are easy for it.  
+Suppose data frame with 1,500,000 rows and 120 columns all of which are numeric. How much memory to store numeric data? 
+1,500,000 x 120 x 8 bytes/numeric
+= 1,440,000,000 bytes 
+= 1,400,000,000 / 2^20 bytes/MB
+= 1,373.29 MB
+= 1.34 GB.
+
+# Using the readr Package
+Recently developed to deal with reading large flat files quickly, replacement for read.table() and read.csv(). Ananogous in readr are read_table() and read_csv().  
+For the most part, can use these instead. 
+```{r}
+library(readr)
+teams <- read_csv("data/team_standings.csv")
+teams
+```
