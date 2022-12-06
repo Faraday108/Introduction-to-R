@@ -264,3 +264,130 @@ col_types accepts a compact representation. "cc" says first and second columns a
 read_csv also reads compressed files automatically, no need to decompress.  
 Can specify column type in detailed fashion using various col_* functions. 
 
+# Using Textual and Binary Formats for Storing Data
+Data can be stored in a variety of ways including strutured forms like CSV. Intermediate format that is textual, but not as simple as CSV.  
+One can create a more descriptive representation of an R object by using the dput() or dump() functions; useful because resulting textual format is editable and recoverable in case of corruption. Preserve metadata (sacrificing readability) so user doesn't have to specify it again.  
+Work much better with VC programs to track meaningful changes.  
+Downsides include not space inefficiency and partial readibility. 
+
+## Using dput() and dump()
+One way to pass data around is deparsing the R object with dput() and reading it back in with dget().  
+```{r}
+# Create a data frame
+y <- data.frame(a = 1, b = "a")
+# Print 'dput' output to console
+dput(y)
+```
+Notice that the dput() output is in the form of R code and that it preserves meta data like class, row names, and column names.  
+Output can also be saved directly to a file
+```{r}
+# Send 'dput' output to a file
+dput(y, file = "y.R")
+# Read in 'dput' output from a file
+new.y <-dget("y.R")
+new.y
+```
+Multiple objects can be deparsed at once using the dump function and read back in using source
+```{r}
+x <- "foo"
+y <- data.frame(a = 1L, b = "a")
+dump(c("x","y"),file = "data.R")
+rm(x,y)
+# Inverse of dump is source
+source("data.R")
+str(y)
+x
+```
+# Binary Formats
+The complement to the textual format is the binary format. Use for efficiency purposes or if no useful way to represent data with text. Also, can lose precision on numeric data when converting to and from textual format.  
+Convert R object to binary: save(), save.image(), serialize().  
+Individual objects with save() function
+```{r}
+a <- data.frame(x = rnorm(100), y = runif(100))
+b <- c(3, 4.4, 1/3)
+# Save 'a' and 'b' to a file
+save(a, b, file = "mydata.rda")
+# Load 'a' and 'b' into workspace
+load("mydata.rda")
+```
+Save lots of objects with save.image()
+```{r}
+# Save everything
+save.image(file = "mydata.RData")
+# Load all objects in this file
+load("mydata.RData")
+```
+Example used .rda for save and .RData for save.image. Can use other formats but these are common and accessible.  
+serialize() converts individual R objects to binary format that can be communicated across an arbitrary connection (file or network).  
+Coded as a raw vector in hexadecimal. 
+```{r}
+x <- list(1, 2, 3)
+serialize(x,NULL)
+```
+Can be sent to a file, but better of using save for that.  
+Benefit to serialize: perfectly represent R object in an exportable format, without losing precision or metadata. 
+
+# Interfaces to the Outside World
+Data are read in using *connection* interfaces. Connections can be made to files or more exotic things. 
+- file, opens connection to file
+- gzfile, opens connection to file compressed with gzip
+- bzfile, opens connection to file compressed with bzip2
+- url, opens connection to webpage. 
+
+Think of connections as translator that lets you talk to objects outside of R.  
+## File Connections
+Connections to file using file()  
+```{r}
+str(file)
+```
+Arguments: 
+
+- description, name of file
+- open, mode to open file 
+  + 'r' read mode
+  + 'w' write mote (and initialize new file)
+  + 'a' appending
+  + 'rb', 'wb', 'ab' readin writing appending in binary
+
+Most of connection is dealt with in background and we don't deal with it. 
+```{r}
+# Create connection to 'foo.txt'
+con <- file("foo.txt")
+# Open connetion in read mode
+open(con, "r")
+# Read from connection 
+data <- read.csv(con)
+# Close connection
+close(con)
+
+# this is all the same as: 
+data <- read.csv("foo.txt")
+```
+In the background, read.csv() opens a connection, reads, and closes the connection. 
+
+# Reading Lines of a Text File
+Lines of text file can be read line by line with readLines(). Useful for unstructured and nonstandard data.  
+```{r}
+# Open connection to gz-compressed file
+# con <- gzfile("words.gz")
+# x <- readLines(con,10)
+# x
+```
+For more structured text like CSV, other functions like read.csv() and read.table() exits.  
+In above, gzfile() is used to create connections to compressed data with gzip algorithm. Lets you not unzip files.  
+Complementary function writeLines() to write character vector element wise to each line. 
+
+## Reading from a URL Connection
+readLines() is useful for reading in lines of webpages that are text files stored on a server. url() function navigates communication between computer and web server. 
+```{r}
+# Open a url connection for reading
+con <- url("https://www.jhu.edu","r")
+
+# Read the webpage
+x <- readLines(con)
+
+# Print first few lines
+head(x)
+```
+Reading a simple page is sometimes useful, more commonly used to read data stored on web servers.  
+Using URL connections can be useful for producing a reproducible analysis, because code documents where the data cam from and how it was obtained. Preferable to opening a webpage and downloading dataset by hand. If server is changed, can break code. 
