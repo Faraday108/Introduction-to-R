@@ -19,11 +19,11 @@ The : operator is used to create integer sequences
 
 ## R Objects
 R has five basic classes of objects
-* Character
-* Numeric (real numbers)
-* Integer
-* Complex
-* Logical (True/False)
+- Character
+- Numeric (real numbers)
+- Integer
+- Complex
+- Logical (True/False)
 
 The vector is the most basic object type, initialized with vector() function.  
 A vector can only contain objects of the same class
@@ -126,3 +126,86 @@ Often, factors are automatically created when reading data with function like da
 Order of levels can be set using levels argument to factor(). Often important in linear modeling with first level as baseline. 
 
 ## Missing Values
+Denoted by NA or NaN for undefined mathematical operations
+- is.na() is used to test for NA
+- is.nan() is used to test for NaN
+- NA values have a class also (integer NA, character NA, etc)
+- A NaN value is also NA
+
+```{r}
+# create a vector with NAs in it
+x <- c(1,2,NA,10,NaN,3)
+# Return logical vector indicating which elements are NA
+is.na(x)
+# Return logical vector indicating which elements are NaN
+is.nan(x)
+```
+
+## Data Frames
+Used to store tabular data in R. Important in many statistical modeling. dplyr has optimized set of functions to work with data frames.  
+Represented as special type of list where everyelement of the list has to have the same length. Each element can be thought of as a column and the length of each element of the list is the number of rows.  
+Unlike matrices, can store different classes of objects in ach column.  
+In addition to column names, DF have attribute called row.names to indicate informration about each row.  
+Usually created by reading a dataset using read.table() or read.csv(). Can be created with data.frame() or converted from other objects.  
+Can be converted to matrix with data.matrix(). 
+```{r}
+x <- data.frame(foo = 1:4, bar = c(TRUE, TRUE, FALSE, FALSE))
+x
+nrow(x)
+ncol(x)
+```
+
+## Names
+R objects can have names, helpful for readable code. 
+```{r}
+x <- 1:3
+names(x)
+names(x) <- c("New York", "Seattle", "Los Angeles")
+x
+names(x)
+
+# Lists can also have names
+x <- list("Los Angeles" = 1, Boston = 2, London = 3)
+x
+names(x)
+
+# Matrices can have both row and column names
+m <- matrix(1:4, nrow = 2, ncol = 2)
+dimnames(m) <- list(c("a","b"),c("c","d"))
+m
+# Column names and row names can be specified separately
+colnames(m) <- c("h","f")
+rownames(m) <- c("x","z")
+m
+```
+Note that for dataframes, there is a separate function for setting row names, the row.names(). DF do not have column names, just names. So you use the names() function. 
+
+# Getting Data In and Out of R
+## Reading and Writing Data
+There are a few principal functions
+- read.table, read.csv for reading tabluar data
+- readLines for reading lines of a text file
+- source, for reading in R code files (inverse of dump)
+- dget, for reading in R code files (inverse of dput)
+- load, for reading in saved workspaces
+- unserialize, for reading simple R objects in binary form. 
+
+Many packages exist for other datasets
+
+Analogous functions for writing to files
+- write.table for writing tabular to text files or connections
+- writeLines, for writing character data line-by-line to file or conn
+- dump, for dumping a textual representation of multiple R objects
+- dput, for outputting a textual representation of an R object
+- save, for saving an arbitrary number of R objects in binary format to a file
+- serialize, for converting an R object into a binary format for outputting to a connection. 
+
+## Reading Data Files with read.table()
+Commonly used. Help file is worth reading. 
+Arguments: 
+- file, name of file, or connection
+- header, logical indicating if file has a header
+- sep, a string indicating how columns are separated
+- colClasses, character vector indicating the class of each column
+- nrows, number of rows. Default reads whole file
+- comment.char, chacter string indicating comment character. 
