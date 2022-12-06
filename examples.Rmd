@@ -259,3 +259,8 @@ library(readr)
 #teams <- read_csv("data/team_standings.csv")
 #teams
 ```
+By default, will open and read lint-by-line. Will also, read first few rows of table to figure out type of column. Can instead specify type of each column with col_types argument. Good idea in general.  
+col_types accepts a compact representation. "cc" says first and second columns are characters.  
+read_csv also reads compressed files automatically, no need to decompress.  
+Can specify column type in detailed fashion using various col_* functions. 
+
