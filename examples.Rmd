@@ -391,3 +391,91 @@ head(x)
 ```
 Reading a simple page is sometimes useful, more commonly used to read data stored on web servers.  
 Using URL connections can be useful for producing a reproducible analysis, because code documents where the data cam from and how it was obtained. Preferable to opening a webpage and downloading dataset by hand. If server is changed, can break code. 
+
+# Subsetting R Objects
+Three operators to extract subsets of R Objects
+
+* The "[]" operator always returns an object of the same class as the original, can be used to select multiple elements of object
+* [[]] operator is used to extract elements of a list or data frame. Used to extract single element and class of returned object will not necessarily be a list or data frame. 
+* $ operator is used to extract elements of a list by literal name. 
+
+## Subsetting a Vector
+Vectors are basic objects and are subsetted using the [] operator.  
+```{r}
+x <- c("a", "b", "c", "c", "d", "a")
+x[1]
+x[2]
+# Can be used to extract multiple elements by passing an inteer sequence. 
+x[1:4]
+# Sequence doesn't need to be in order
+x[c(1, 3, 4)]
+# Can also pass logical sequence. For example, elements of x that come alphabetically after letter a
+u <- x > "a"
+x[u]
+# More compactly:
+x[x > "a"]
+```
+
+# Subsetting a Matrix
+Subsetted in usual way with (*i*, *j*) indices. Row x column
+```{r}
+x <- matrix(1:6, 2, 3)
+x
+# access elements using indices
+x[1,2]
+x[2,1]
+# Missing index indicates entire row/column
+x[1,]
+x[,2]
+```
+### Dropping Matrix Dimensions
+By default, when you index a single element a vector length 1 is returned. Can turn this off. 
+```[r}
+x <- matrix(1:6, 2, 3)
+x[1,2]
+x[1, 2, drop = FALSE]
+# Similar use to keep matrix dimensions for extracting entire row. 
+x[1,]
+x[1, , drop = FALSE]
+```
+**Be careful of R's automatic dropping of dimensions**
+
+## Subsetting Lists
+```{r}
+x <- list(foo - 1:4, bar = 0.6)
+x
+## The [[]] operator can be used to extract a single element from a list
+x[[1]]
+## Can also use named indices or $ operator to extract by name
+x[["bar"]]
+x$bar
+# Don't need quotes on $ operator. 
+# [[ can be used with computed indices, $ operator can only be used with names
+x <- list(foo = 1:4, bar = 0.6, baz = "hello")
+name <- "foo"
+
+# Computed index for "foo"
+x[[name]]
+# element name doesn't exist! 
+x$name
+```
+
+## Subsetting Nested Elements of a List
+The [[]] operator can take an integer sequence
+```{r}
+x <- list(a = list(10, 12, 14), b = c(3.14, 2.81))
+# Get 3rd element of the first element
+x[[c(1,3)]]
+# Alternative
+x[[1]][[3]]
+# first element of second element
+x[[c(2,1)]]
+```
+
+## Extracting Multiple Elements of a List
+The [] operator can extract multiples
+```{r}
+x <- list(foo = 1:4, bar = 0.6, baz = "hello")
+x[c(1,3)]
+```
+Note that x[c(1,3)] is not the same as x[[c(1,3)]]! 
