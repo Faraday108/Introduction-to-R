@@ -214,7 +214,7 @@ Arguments:
 
 For small to moderate size, you can usually call read.table
 ```{r}
-data <- read.table("foo.txt")
+#data <- read.table("foo.txt")
 ```
 - In this case, R will automatically skip lines that begin with #
 - figure out how many rows there are and how much mem is needed. 
@@ -230,9 +230,9 @@ With larger data sets, make life easier and prevent R from choking by:
 - Use colClasses argument. Specifing this can make it run **much** faster, often twice as fast. 
 
 ```{r}
-initial <- read.table("datatable.txt",nrows=100)
-classes <- sapply(initial,class)
-tabAll <- read.table("datatable.txt",colClasses=classes)
+#initial <- read.table("datatable.txt",nrows=100)
+#classes <- sapply(initial,class)
+#tabAll <- read.table("datatable.txt",colClasses=classes)
 ```
 - set nrows. Doesn't make faster but helps with memory. 
 
@@ -256,6 +256,6 @@ Recently developed to deal with reading large flat files quickly, replacement fo
 For the most part, can use these instead. 
 ```{r}
 library(readr)
-teams <- read_csv("data/team_standings.csv")
-teams
+#teams <- read_csv("data/team_standings.csv")
+#teams
 ```
