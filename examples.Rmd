@@ -352,16 +352,16 @@ Arguments:
 Most of connection is dealt with in background and we don't deal with it. 
 ```{r}
 # Create connection to 'foo.txt'
-con <- file("foo.txt")
+#con <- file("foo.txt")
 # Open connetion in read mode
-open(con, "r")
+#open(con, "r")
 # Read from connection 
-data <- read.csv(con)
+#data <- read.csv(con)
 # Close connection
-close(con)
+#close(con)
 
 # this is all the same as: 
-data <- read.csv("foo.txt")
+#data <- read.csv("foo.txt")
 ```
 In the background, read.csv() opens a connection, reads, and closes the connection. 
 
@@ -442,7 +442,7 @@ x[1, , drop = FALSE]
 
 ## Subsetting Lists
 ```{r}
-x <- list(foo - 1:4, bar = 0.6)
+x <- list(foo = 1:4, bar = 0.6)
 x
 ## The [[]] operator can be used to extract a single element from a list
 x[[1]]
