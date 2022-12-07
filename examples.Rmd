@@ -352,16 +352,16 @@ Arguments:
 Most of connection is dealt with in background and we don't deal with it. 
 ```{r}
 # Create connection to 'foo.txt'
-#con <- file("foo.txt")
+con <- file("foo.txt")
 # Open connetion in read mode
-#open(con, "r")
+open(con, "r")
 # Read from connection 
-#data <- read.csv(con)
+data <- read.csv(con)
 # Close connection
-#close(con)
+close(con)
 
 # this is all the same as: 
-#data <- read.csv("foo.txt")
+data <- read.csv("foo.txt")
 ```
 In the background, read.csv() opens a connection, reads, and closes the connection. 
 
@@ -442,7 +442,7 @@ x[1, , drop = FALSE]
 
 ## Subsetting Lists
 ```{r}
-x <- list(foo = 1:4, bar = 0.6)
+x <- list(foo - 1:4, bar = 0.6)
 x
 ## The [[]] operator can be used to extract a single element from a list
 x[[1]]
@@ -480,59 +480,74 @@ x[c(1,3)]
 ```
 Note that x[c(1,3)] is not the same as x[[c(1,3)]]! 
 
-## Removing NA Values
+# Dates and Times
+R has a special representation for date and time with. Date class for dates and POSIXct or POSIXlt for times. Date is stored as number of days since 1970-01-01 while time is number osf seconds since 1970-01-01. 
+
+## Dates in R
+Dates are represented by Date class and can be coerced from a character string with as.Date(). 
 ```{r}
-x <- c(1, 2, NA, 4, NA, 5)
-bad <- is.na(x)
-x[!bad]
-# What if there are multiple R objects and you want to take the subset with no missing values of those objects? 
-x <- c(1, 2, NA, 4, NA, 5)
-y <- c("a", "b", NA, "d", NA, "f")
-good <- complete.cases(x,y)
-good
-x[good]
-y[good]
-# Can be used on data frames too
-head(airquality)
-good <- complete.cases(airquality)
-head(airquality[good, ])
+# Coerce a date object from character
+x <- as.Date("1970-01-01")
+x
+# You can see internal representation of Date object by using the unclass() function. 
+unclass(x)
+unclass(as.Date("1970-01-02"))
 ```
 
-# Vectorized Operations
-Many operations in R are *vectorized*, meaning they occur in parallel in certain R objects allowing efficient, concise, easy to read code. 
-Simple example of adding two vectors. 
-```{r}
-x <- 1:4
-y <- 6:9
-z <- x + y
-z
-# without vectorization, you'd have to do something like
-z <- numeric(length(x))
-for( i in seq_along(x)) {
-  z[i] <- x[i] + y[i]
- }
- z
- ```
- Not as efficient! Another vectorized operation is logical comparisons. 
- ```{r}
- x <- 1:4
- x > 2
- x>=2
- x<3
- x == 1
- # Subtract, mult, divide are also vectorized
- ```
- 
- ## Vectorized Matrix operations
- Enables element by element operations without having to loop over every element. 
-```{r}
-x <- matrix(1:4, 2, 2)
-y <- matrix(rep(10,4), 2, 2)
+## Times in R
+Times are represented by POSIXct or POSIXlt. 
+POSIXct is just a large integer underneath and useful for storing in data frame. 
+POSIXlt is a list underneath and stores extra info like day of week, year, month, day of month. Useful if you need extra info. 
 
-# element-wise mult
-x * y
-# element-wise div
-x / y
-# True matrix multiplication
-x %*% y
+Generic Functions
+
+- weekdays: gives day of week
+- months: gives the month dame
+- quarters: gives the quarter number "Q1" etc. 
+
+Times can be coerced from character string using as.POSIXlt or as.POSIXct
+```{r}
+x <- Sys.time()
+x
+class(x)
+# POSIXlt has useful metadata
+p <- as.POSIXlt(x)
+names(unclass(p))
+p$wday
+
+# can also use POSIXct format
+x <- Sys.time() 
+x # already in POSIXct format
+unclass(x) # Internal representation
+x$sec #Won't work! 
+p <- as.POSIXlt(x)
+p$sec
+
+# strptime() for dates in different format. Takes character vector and converts them to POSIXlt object. 
+datestring <- c("January 1, 2012 10:40", "December 9, 2011 9:10")
+x <- strptime(datestring, "%B %d, %Y %H:%M")
+x
+class(x)
+```
+The % symbols are for formatting strings for dates and times. Probably not worth memorizing. Check ?strptime for details. 
+
+## Operations on Dates and Times
+Can use +, - and comparisions (==, <=, etc)
+
+```{r}
+x <- as.Date("2012-01-01")
+y <- strptime("9 Jan 2011 11:34:21", "%d %b %Y %H:%M:%S")
+x - y
+x <- as.POSIXlt(x)
+x - y
+```
+A nice feature of this class is it keeps track of leap years, daylight savings, time zones. 
+```{r}
+x <- as.Date("2012-03-01")
+y <- as.Date("2012-02-28")
+x - y
+# Timezone
+x <- as.POSIXct("2012-10-25 01:00:00")
+y <- as.POSIXct("2012-10-25 06:00:00", tz="GMT")
+y - x
 ```
