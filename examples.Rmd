@@ -496,3 +496,43 @@ y[good]
 head(airquality)
 good <- complete.cases(airquality)
 head(airquality[good, ])
+```
+
+# Vectorized Operations
+Many operations in R are *vectorized*, meaning they occur in parallel in certain R objects allowing efficient, concise, easy to read code. 
+Simple example of adding two vectors. 
+```{r}
+x <- 1:4
+y <- 6:9
+z <- x + y
+z
+# without vectorization, you'd have to do something like
+z <- numeric(length(x))
+for( i in seq_along(x)) {
+  z[i] <- x[i] + y[i]
+ }
+ z
+ ```
+ Not as efficient! Another vectorized operation is logical comparisons. 
+ ```{r}
+ x <- 1:4
+ x > 2
+ x>=2
+ x<3
+ x == 1
+ # Subtract, mult, divide are also vectorized
+ ```
+ 
+ ## Vectorized Matrix operations
+ Enables element by element operations without having to loop over every element. 
+```{r}
+x <- matrix(1:4, 2, 2)
+y <- matrix(rep(10,4), 2, 2)
+
+# element-wise mult
+x * y
+# element-wise div
+x / y
+# True matrix multiplication
+x %*% y
+```
