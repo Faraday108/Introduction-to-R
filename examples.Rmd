@@ -679,3 +679,67 @@ transmute() does the same as mutate but then *drops all non-transformed variable
 head(transmute(chicago,
   pm10detrend = pm10tmean2 - mean(pm10tmean2, na.rm = TRUE),
   o3detrend = o3tmean2 - mean(o3tmean2, na.rm = TRUE)))
+```
+
+## group_by()
+Creates summary statistics from the data frame within strata defined by a variable. For example, can compute average annual level of PM2.5. Stratum is the year, derived from date. 
+Standard operation is split data frame into separate pieces defined by variable or group of variables with group_by(), then apply summary function.
+```{r}
+chicago <- mutate(chicago, year = as.POSIXlt(date)$year + 1900) # year variable
+years <- group_by(chicago, year) # create separate data frame that splits original DF by year. 
+# Finally, compute summary statistics
+summarize(years), pm25 = mean(pm25, na.rm = TRUE),
+  o3 = max(o3tmean2,na.rm = TRUE),
+  no2 = median(no2tmean2,na.rm = TRUE),
+  .groups = "drop")
+ 
+```
+summarize() returns a dataframe with year as first column, then annual averages of pm25, o2, and no2. 
+As a more complicated example, might want to know average levels of ozone and nitrogen dioxide within quintiles of pm25. A regression model would be slicker, but we can do quickly with group_by() and summarize(). 
+
+```{r}
+qq <- quantile(chicago$pm25,seq(0,1,0.2),na.rm = TRUE)
+chicago <- utate(chicago, pm25.quint = cut(pm25,qq))
+# Now we can group the data frame by the pm.25 quint variable. 
+quint <- group_by(chicago, pm25.quint)
+# Finally, compute mean within quintiles. 
+summarize(quint, o3 = mean(o3tmean2, na.rm = TRUE),
+  no2 = mean(no2tmean2, na.rm = TRUE),
+  .groups = "drop")
+```
+
+From the table above, there isn't a strong relationship between pm25 and o3, but a positive correlation between pm25 and no2. More sophisticated stat modeling can give precise answers to these questions, but this application can get you most of the way there. 
+
+## %>%
+The pipeline operator is handy for stringing together multiple functions in a sequence of operations. Above, we had to nest the functions when applying multiple. The pipeline operator lets you string operations left to right instead of nesting. In the last section we had to: 
+
+1. create a new variable pm25.quint
+2. split the data frame by that new variable
+3. compute the mean of o3 and no2 in the sub-groups defined by pm25.quint
+
+That can be done with the following sequene: 
+```{r}
+mutate(chicago, pm25.quint = cut(pm25,qq)) %>%
+  group_by(pm25.quint) %>%
+  summarize(o3 = mean(o3tmean2, na.rm = TRUE),
+    no2 = mean(no2tmean2, na.rm = TRUE),
+    .groups = "drop")
+```
+This helps us not create a set of temporary variables along the way or massive nested sequences. The first argument of a pipeline is taken to be the output of the previous element in the pipeline. 
+Another example is average pollutant level by month. 
+```{r}
+mutate(chicago, month = as.POSIXlt(date)$mon + 1) %>%
+  group_by(month) %>%
+  summarize(pm25 = mean(pm25, na.rm = TRUE),
+    o3 = max(o3tmean2, na.rm = TRUE),
+    no2 = median(no2tmean2, na.rm = TRUE),
+    .groups = "drop)
+```
+
+## Summary
+the dplyr package provides a concise set of operations for managing data frames. 
+Additonal benefits: 
+
+* can work with other data frame "backends" such as SQL databases. There is an SQL interface for relational databases via the DBI package
+* can be integrated with the data.table package for large fast tables.
+
