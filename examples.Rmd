@@ -743,3 +743,37 @@ Additonal benefits:
 * can work with other data frame "backends" such as SQL databases. There is an SQL interface for relational databases via the DBI package
 * can be integrated with the data.table package for large fast tables.
 
+# Control Structures
+Control flow of execution, put "logic" into code. 
+Commonly used strutures: 
+
+* if and else: testing a condition and acting on it
+* for: execute a loop a fixed number of times
+* while: execute a loop while a condition is true
+* repeat: execute an infinite loop (must break to stop)
+* break: break execution of loop
+* next: skip an interation
+
+Not really used in interactive sessions, but when writing functions and long expressions. 
+
+## if-else
+Common conditional
+if(<condition>) {
+  do something
+}
+else {
+  do something else
+}
+rest of code
+Does nothing if condition is false, if you want an action when false, use else. 
+Can have series of tests: 
+if(<condition1>) {
+  do something
+  }
+else if (<condition2>) {
+  do something different
+  }
+else {
+  do something different
+}
+
