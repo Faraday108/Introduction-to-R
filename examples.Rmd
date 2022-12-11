@@ -758,22 +758,107 @@ Not really used in interactive sessions, but when writing functions and long exp
 
 ## if-else
 Common conditional
-if(<condition>) {
-  do something
-}
-else {
-  do something else
-}
-rest of code
 Does nothing if condition is false, if you want an action when false, use else. 
 Can have series of tests: 
-if(<condition1>) {
-  do something
-  }
-else if (<condition2>) {
-  do something different
-  }
-else {
-  do something different
-}
 
+## for loops
+Takes an iterator variable and assign it successive values from a sequence or vector. Commonly used to iterate over elements of an object. 
+```{r}
+for(i in 1:10) {
+  print(i)
+}
+```
+This loop takes the variable i in each iteration of the loop and gives it values 1, 2, 3...10 executes the code, then exits. 
+The following three loops have the same effect. 
+```{r}
+x <- c("a", "b", "c", "d")
+for(i in 1:4) {
+  print(x[i])
+}
+# seq_along() is commonly used in conjunction with for loops to generate
+# integer sequence based on length of object. 
+for(i in seq_along(x)) {
+  print(x[i])
+}
+# Not necessary to use an index-type variable. 
+for(letter in x) {
+  print(letter)
+}
+# For one line loops, can skip braces
+for(i in 1:4) print(x[i])
+```
+Not a bad idea to always use curley braces - makes it easier to expand function at later date. 
+
+## Nested for loops
+```{r}
+x <- matrix(1:6, 2, 3)
+
+for(i in seq_len(nrow(x))) {
+  for(j in seq_len(ncol(x))){
+    print(x[i,j])
+  }
+}
+```
+Commonly used for multidimensional or hierarcharal data structures. Avoid more than 2-3 levels of nesting as it can make code difficult to read. Consider breaking up loops with functions. 
+
+## while loops
+Begin by testing a condition, if true body executes. 
+```{r}
+count <- 0
+while(count < 10) {
+  print(count)
+  count <- count + 1
+}
+```
+Can create infinite loops if not careful! 
+Can have multiple conditions, evaluated left to right. 
+```{r}
+z <- 5
+set.seed(1)
+while(z >= 3 && z <=10) {
+  coin <- rbinom(1,1,0.5)
+  if(coin == 1) { # random walk
+      z <- z + 1
+    } else {
+      z <- z - 1
+    }
+}
+print(z)
+```
+
+## repeat loops
+Creates an infinite loop, not commonly used in stats applications. Can only be exited with a break
+Possible paradigm might be iterative algorithm where you are searching for a solution and don't want to stop till you're close enough. Often don't know how many iterations itll take to get close enough. 
+```{r}
+x0 <- 1
+tol <- 1e-8
+
+repeat {
+  x1 <- computeEstimate()
+  
+  if(abs(x1 - x0) < tol) { #close enough? 
+    break
+  } else {
+    x0 <- x1
+  }
+}
+```
+Above code won't run if the computeEstimate() function is not defined. 
+Looping this way is dangerous as no guarantee itll stop. Can set hard limit on number of iterations using a for loop and then report on convergence. 
+
+## next, break
+next skips an iteration
+```[r}
+for(i in 1:100) {
+  if(i <=20) {
+    next
+  }
+  # do something else
+}
+# break exits immediately
+for(i in 1:100) {
+  print(i)
+  if(i > 20) {
+    break
+  }
+}
