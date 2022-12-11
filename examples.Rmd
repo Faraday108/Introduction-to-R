@@ -350,7 +350,7 @@ Arguments:
   + 'rb', 'wb', 'ab' readin writing appending in binary
 
 Most of connection is dealt with in background and we don't deal with it. 
-```{r}
+```{r, eval = FALSE}
 # Create connection to 'foo.txt'
 con <- file("foo.txt")
 # Open connetion in read mode
@@ -442,7 +442,7 @@ x[1, , drop = FALSE]
 
 ## Subsetting Lists
 ```{r}
-x <- list(foo - 1:4, bar = 0.6)
+x <- list(foo = 1:4, bar = 0.6)
 x
 ## The [[]] operator can be used to extract a single element from a list
 x[[1]]
@@ -519,7 +519,7 @@ p$wday
 x <- Sys.time() 
 x # already in POSIXct format
 unclass(x) # Internal representation
-x$sec #Won't work! 
+# x$sec #Won't work! 
 p <- as.POSIXlt(x)
 p$sec
 
@@ -537,7 +537,7 @@ Can use +, - and comparisions (==, <=, etc)
 ```{r}
 x <- as.Date("2012-01-01")
 y <- strptime("9 Jan 2011 11:34:21", "%d %b %Y %H:%M:%S")
-x - y
+# x - y doesn't work! 
 x <- as.POSIXlt(x)
 x - y
 ```
@@ -583,22 +583,22 @@ dplyr package also includes a number of data types.
 ## Installing dplyr package
 Can be installed from CRAN or GitHub uisng devtools pacakage and install_github() fuction. GitHub usually has latest updates of function.  
 To install from CRAN, run
-```{r}
+```{r, eval = FALSE}
 install.packages("dplyr")
 ```
 To install from GitHub use
-```{r}
+```{r, eval = FALSE}
 install_github("hadley/dplyr")
 ```
 Remember to load into R session with library()!
-```{r}
+```{r, eval = FALSE}
 library(dplyr)
 ```
 If R gives warnings about functions with the same name, ignore for now.
 
 ## select()
 Examples in this section will use dataset available from textbook's website. Download an unzip then load using readRDS()
-```{r}
+```{r, eval = FALSE}
 chicago <- readRDS("chicago.rds")
 # Basic characteristics
 dim(chicago)
@@ -606,7 +606,7 @@ str(chicago)
 ```
 select() function to select columns to focus on. You'll often have large dataset but any given analysis will use subset. 
 Suppose we want first 3 columns. Can use numeric index or column names directly. 
-```{r}
+```{r, eval = FALSE}
 names(chicago)[1:3]
 subset <- select(chicago,city:dptp)
 head(subset)
@@ -619,7 +619,7 @@ j <- match("dptp", names(chicago))
 head(chicago[,-(i:j)]
 ```
 Select also lets special syntax for patterns
-```{r}
+```{r, eval = FALSE}
 # keep var ending with "2"
 subset <- select(chicago,ends_with("2"))
 str(subset)
@@ -632,7 +632,7 @@ You can also use general regex.
 ## filter()
 Extract subset rows. Similar to subset() but faster. 
 Extract rows with PM2.5 greater than 30
-```{r}
+```{r, eval = FALSE}
 chic.f <- filter(chicago,pm25tmean2 > 30)
 str(chic.f)
 summary(chic.f$pm25tmean2)
@@ -645,7 +645,7 @@ select(chic.f, date, tmpd, pm25tmean2)
 
 ## arrange()
 Used to reorder rows according to one of the variables/columns. Reordering, while preserving order of other columns, is a pain in R. arrange() simplifies the process. 
-```{r}
+```{r, eval = FALSE}
 chicago <- arrange(chicago, date) #starts at earliest, ends at oldest
 head(select(chicago, date, pm25tmean2), 3)
 tail(select(chicago, date, pm25tmean2), 3)
@@ -658,7 +658,7 @@ tail(select(chicago, date, pm25tmean2),3)
 
 ## rename()
 Renaming a variable in R is surprisingly hard to do! rename() makes it easier. 
-```{r}
+```{r, eval = FALSE}
 head(chicago[, 1:5],3) # names of first 5 variables
 # dptp represents dew point temp
 # pm25tmean2 provides PM2.5 data
@@ -670,12 +670,12 @@ head(chicago[,1:5],3)
 ## mutate()
 Compute transformations of variables, such as deriving new variables from existing. 
 For example, can 'detrend' data by subtracting a mean to see how it differs from average rather than absolute level. 
-```{r}
+```{r, eval = FALSE}
 chicago <- mutate(chicaago, pm25detrend = pm25 - mean(pm25, na.rm = TRUE))
 head(chicago)
 ```
 transmute() does the same as mutate but then *drops all non-transformed variables*
-```{r}
+```{r, eval = FALSE}
 head(transmute(chicago,
   pm10detrend = pm10tmean2 - mean(pm10tmean2, na.rm = TRUE),
   o3detrend = o3tmean2 - mean(o3tmean2, na.rm = TRUE)))
@@ -684,7 +684,7 @@ head(transmute(chicago,
 ## group_by()
 Creates summary statistics from the data frame within strata defined by a variable. For example, can compute average annual level of PM2.5. Stratum is the year, derived from date. 
 Standard operation is split data frame into separate pieces defined by variable or group of variables with group_by(), then apply summary function.
-```{r}
+```{r, eval = FALSE}
 chicago <- mutate(chicago, year = as.POSIXlt(date)$year + 1900) # year variable
 years <- group_by(chicago, year) # create separate data frame that splits original DF by year. 
 # Finally, compute summary statistics
@@ -697,7 +697,7 @@ summarize(years), pm25 = mean(pm25, na.rm = TRUE),
 summarize() returns a dataframe with year as first column, then annual averages of pm25, o2, and no2. 
 As a more complicated example, might want to know average levels of ozone and nitrogen dioxide within quintiles of pm25. A regression model would be slicker, but we can do quickly with group_by() and summarize(). 
 
-```{r}
+```{r, eval = FALSE}
 qq <- quantile(chicago$pm25,seq(0,1,0.2),na.rm = TRUE)
 chicago <- utate(chicago, pm25.quint = cut(pm25,qq))
 # Now we can group the data frame by the pm.25 quint variable. 
@@ -718,7 +718,7 @@ The pipeline operator is handy for stringing together multiple functions in a se
 3. compute the mean of o3 and no2 in the sub-groups defined by pm25.quint
 
 That can be done with the following sequene: 
-```{r}
+```{r, eval = FALSE}
 mutate(chicago, pm25.quint = cut(pm25,qq)) %>%
   group_by(pm25.quint) %>%
   summarize(o3 = mean(o3tmean2, na.rm = TRUE),
@@ -727,7 +727,7 @@ mutate(chicago, pm25.quint = cut(pm25,qq)) %>%
 ```
 This helps us not create a set of temporary variables along the way or massive nested sequences. The first argument of a pipeline is taken to be the output of the previous element in the pipeline. 
 Another example is average pollutant level by month. 
-```{r}
+```{r, eval = FALSE}
 mutate(chicago, month = as.POSIXlt(date)$mon + 1) %>%
   group_by(month) %>%
   summarize(pm25 = mean(pm25, na.rm = TRUE),
@@ -829,7 +829,7 @@ print(z)
 ## repeat loops
 Creates an infinite loop, not commonly used in stats applications. Can only be exited with a break
 Possible paradigm might be iterative algorithm where you are searching for a solution and don't want to stop till you're close enough. Often don't know how many iterations itll take to get close enough. 
-```{r}
+```{r, eval = FALSE}
 x0 <- 1
 tol <- 1e-8
 
@@ -924,11 +924,11 @@ mydata <- rnorm(100, 2, 1)
 ```
 When specifying arguments by name, order doesn't matter. 
 You can mix positional and name matching. Once an argument is matched by name, it is 'taken out' of the argument list and the remaining unnamed arguments are matched in the listed order. 
-```{r}
+```{r, eval = FALSE}
 args(lm)
 # Following two calls are equivalent
 lm(data = mydata, y~x, model = FALSE, 1:100)
-lm(y~x, mydata, 1:100, model = FALSE
+lm(y~x, mydata, 1:100, model = FALSE)
 ```
 Arguments can also be partially matched. 
 
@@ -955,10 +955,11 @@ Example: custom plotting
 ```{r}
 myplot <- function(x,y,type='l',...) {
   plot(x,y,type = type,...) # passes '...' to 'plot' function
-  ```
+}
+```
   Generic functions use ... so that extra arguments can be passed to methods. 
-  ```{r}
+```{r}
   mean
-  ```
+```
 The ... argument is necessary when the number of arguments passed to the function cannot be known in advance. Clear functions like paste() and cat(). 
 
