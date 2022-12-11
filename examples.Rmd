@@ -862,3 +862,103 @@ for(i in 1:100) {
     break
   }
 }
+```
+# Functions
+Core activity of R programmer. Step from user to developing new functionality for R. Encapsulate sequence of expressions that need to be excuted numerous times, perhaps under different conditions. Often used when code is shared with others or public.  
+Allows develper to create interfact to code, explicitly specified with set of parameters. Provides abstraction of code to user to simplify process so user doesn't have to know every detail of code. Can allow developer to communicate to user aspects of code that are important or relevant. 
+
+## Functions in R
+'first class objects' treated like any other R object. 
+
+* Functions can be passed as arguments to other functions. 
+* Can be nested. 
+
+## Your first function
+Defined using function() directive and stored as R objects of class function. 
+```{r}
+f <- function() {
+  # This is an empty function
+}
+class(f)
+f()
+```
+Nontrivial example:
+```{r}
+f <- function() {
+  cat("Hello, world! \n")
+}
+f()
+```
+Can include arguments that user may explicitly set. 
+```{r}
+f <- function(num) {
+  for(i in seq_len(num)) {
+    cat("Hello, world!\n")
+  }
+}
+f(3)
+```
+Can also return objects
+```{r}
+f <- function(num) {
+  hello <- "Hello, world!\n"
+  for(i in seq_len(num)) {
+    cat(hello)
+  }
+  chars <- nchar(hello) * num
+  chars
+}
+meaningoflife <- f(3)
+print(meaningoflife)
+```
+Return value of a function is always the very last expression that is evaluated. 
+There is a return() function to explictly return values, rarely used in R. 
+If num wasn't specified above, R will give an error. Can set default. 
+formals() will return list of all the formal arguments of a function. Functions have named arguments that can have default values so you can specify argument by name. Useful if has lots of arguments. 
+
+## Argument matching
+Arguments of functions can be matched by position or by name. 
+```{r}
+str(rnorm)
+mydata <- rnorm(100, 2, 1)
+```
+When specifying arguments by name, order doesn't matter. 
+You can mix positional and name matching. Once an argument is matched by name, it is 'taken out' of the argument list and the remaining unnamed arguments are matched in the listed order. 
+```{r}
+args(lm)
+# Following two calls are equivalent
+lm(data = mydata, y~x, model = FALSE, 1:100)
+lm(y~x, mydata, 1:100, model = FALSE
+```
+Arguments can also be partially matched. 
+
+1. Check for exact match for a named argument
+2. Check for a partial match
+3. Check for a positional match
+
+Partial matching should be avoided when writing long code or programs as it can lead to confusion. Useful for interactive use. 
+
+## Lazy Evaluation
+Arguments to functions are evaluated lazily, so only evaluated as needed in body of function. 
+For example: 
+```{r}
+f <- function(a,b) {
+  a^2
+}
+f(2)
+```
+This function never uses argument b, so calling f(2) will not produce an error because 2 is positionally matched to a. 
+
+## The ... argument
+Indicates a variable number of arguments that are usually passed onto other functions. Often used when extending another function and you don't want to copy the entire argument list of the original function. 
+Example: custom plotting
+```{r}
+myplot <- function(x,y,type='l',...) {
+  plot(x,y,type = type,...) # passes '...' to 'plot' function
+  ```
+  Generic functions use ... so that extra arguments can be passed to methods. 
+  ```{r}
+  mean
+  ```
+The ... argument is necessary when the number of arguments passed to the function cannot be known in advance. Clear functions like paste() and cat(). 
+
