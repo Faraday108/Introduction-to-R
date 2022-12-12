@@ -1094,3 +1094,10 @@ Because of 1D problem, can use simpler optimize() function rather than optim().
 ## Plotting the Likelihood
 Another nice feature you can use is plotting the negative log-liklihood to see how peaked or flat it is. 
 Check out text for examples. 
+
+# Coding Standards for R
+By no means universal. 
+**Always use text files/text editor** Use RStudio or similar, not Word  
+**Indent your code** Greatly helps readability. Min 4 spaces, 8 ideal.  
+**Limit the width of code** Limit width of text editor so it doesn't fly off right hand side. Deliberately limits ability to write very long functions with many levels of nesting.  
+**Limit length of individual functions** Ideal purpose of function is to execute one activity or idea. Rule of thumb: no more than one page of editor. 
