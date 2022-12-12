@@ -963,3 +963,134 @@ myplot <- function(x,y,type='l',...) {
 ```
 The ... argument is necessary when the number of arguments passed to the function cannot be known in advance. Clear functions like paste() and cat(). 
 
+## Arguments after the ... argument
+One catch - arguments after ... must be named explicitly and cannot be matched partially or positionally. 
+```{r}
+args(paste)
+```
+With the paste() function, the arguments sep and collapse must be named explicitly if default values are not used. 
+
+# Scoping Rules of R
+## A diversion on Binding Values to Symbol 
+How does R know which value to assign to which symbol?
+```{r}
+lm <- function(x) {x * x}
+lm
+```
+How does R know what value to assign to lm? Why doesn't it give it the value of lm that is in the stats package? 
+When R tries to bind a value to a symbol, it searches through a series of environments to find the appropriate value. When you work on the command line, R follows (roughly) the order: 
+
+1. Search global environment (workspace) for a symbol name matching the one requested. 
+2. Search the naamespaces of each package on the search list. 
+
+The search list can be found with search()
+```{r}
+search()
+```
+The *global environment*, or user's workspace, is always the first and base is always the last. The order matters, particularly if there are multiple objets with the same name in different packages.  
+Users load packages at startup, so if you are writing a function or package  you cannot assume a default order. When a user loads a package with library(), the namespace of that package is at position 2 and eerything else is shifted.  
+Note R has separate namespaces for functions and non-functions so you can have an object named c and a function named c().  
+
+## Scoping Rules
+Main feature that makes R different from S.  
+The scoping rules of a language determine how a value is associated with a *free variable* in a function. R uses *lexical scoping* or *static scoping*. An alternative is *dynamic scoping*. Lexical scoping is useful for simplifying statistical computations.  
+Related to scoping rules is how R uses the search list to bind a value to a symbol. Consider: 
+```{r, eval = FALSE}
+f <- function(x,y) {
+x^2 + y / z
+}
+```
+This function has 2 formal arguments x and y. In the body is z, a free variable. Free variables are not formal arguments and are not local variables (assigned inside a function's body). In lexical scoping, the values of free variables are searched for in the environment in which the function was defined. 
+What is that environment? An *environment* is a cllection of (symbol, value) pairs, ie x is the symbol and 3.14 is the value. Every environment has a parent environment and maybe multiple children. Only environment without a parent is the empty environment.  
+A function, together with an environment, make up a *closure* or *function closure*. Most of the time, we don't need to think about a function and its associated environment, but can be useful to consider. Can be used to create functions that "carry around" data with them.  
+How do we associate a value to a free variable? Search process: 
+
+* If the value of a symbol is not found in the environment in which a function was defined, then continue to parent environment. 
+* Continue down sequence of parent environments till we hit the *top-level envornment*, usually the global environment or namespace of a package. 
+* After the top-level environment, continue down search list till we hit the empty environment. 
+
+If a value for a symbol isn't found by end, then an error is thrown.  
+One consequence: it can be affected by the number of packages you have attached to search list. More packages -> more symbols to search. Would need a LOT of packages attached to  notice a real difference in speed. 
+
+** Lexical scoping: why does it matter? 
+Typically, a function is defined in the global environment, so that the values of free variables are found in the user's workspace. his behavior is logical and usually the 'right thing'. However, if a function is defined inside another function, the environment in which a function is defined is the body of another function. 
+```{r}
+make.power <- function(n) {
+  pow <- function(x) {
+    x^n
+  }
+  pow
+}
+```
+The make.power() function is a kind of 'constructor function' that can be used to construct other functions. 
+```{r}
+cube <- make.power(3)
+square <- make.power(2)
+cube(3)
+square(3)
+```
+If we look at cube()'s code, we see a free variable n. WHat is the value of n? It is taken from the environment where the function was defined. Cube was defined when make.power(3) was called, so the value of n was 3.  
+We can explore the environment of a function. 
+```{r}
+ls(environment(cube))
+get("n",environment(cube))
+```
+
+## Lexical vs Dynamic Scoping
+Example: 
+```{r}
+y <- 10
+f <- function(x) {
+  y <- 2
+  y^2 + g(x)
+}
+g <- function(x) {
+  x*y
+}
+```
+What is the value of f(3)? 
+With lexical scoping, the value of y in the function g is looked up in the environment in which the function was defined, in this case the global environment, so the value of y is 10. With dynamic scoping, the value of y is looked up in the environment from which the function was called (sometimes referred to as the calling environment). In R the calling environment is known as the parent frame. In this case, the value of y would be 2. 
+When a function is defined in the global environment and subsequently called from the global environment, then the defining environment are the same. This can give the appearance as dynamic scoping. 
+Lexical scoping in R has consequences beyond how free variables are looked up. Particularly, its why all objects must be stored in memory: all functions must carry a pointer to their respective defining environments, which could be anywhere. 
+
+## Application: Optimization
+Why is this info on lexical scoping useful? 
+Optimization routines in R like optim(), nlm(), and optimize() require you to pass a function whose argument is a vector of parameters (eg log-liklihood, or cost function). However, an objective function that needs to be optimized might depend on a host of other things (like data). WHen writing optimizers, it might be desirable to allow user to hold certain parameters fixed. Scoping rules of R allow you abstract away much of the complexity involved in these kinds of problems. 
+Example of a constructor that creates a negative log-liklihood function that can be minimized to find maximum liklihood estimates in a statistical model. 
+```{r, eval = FALSE}
+make.NegLogLik <- function(data, fixed = c(False, False)) {
+  params <- fixed
+  function(p) {
+    params[!fixed] <- p
+    mu <- params[1]
+    sigma <- params[2]
+    
+    # Calculate the Normal density
+    a <- -0.5*length(data)*log(2*pi*sigma^2)
+    b <- -0.5*sum((data-mu)^2) / (sigma^2)
+    -(a+b)
+  }
+}
+```
+Note: optimization functions in R minimize functions, so you need to use the negative log-liklihood. 
+```{r}
+set.seed(1)
+normals <- rnorm(100,1,2)
+nLL <- make.NegLogLik(normals)
+nLL
+## What's in the function environment? 
+ls(environment(nLL))
+## Now that we have nLL() function, can try to minimize it with optim()
+## to estimate parameters. 
+optim(c(mu = 0, sigma = 1),nLL)$par
+```
+Can also try to estimate one parameter while holding another parameter fixed. 
+```{r}
+nLL <- make.NegLogLik(normals,c(FALSE,2))
+optimize(nLL,c(-1,3))$minimum
+```
+Because of 1D problem, can use simpler optimize() function rather than optim(). 
+
+## Plotting the Likelihood
+Another nice feature you can use is plotting the negative log-liklihood to see how peaked or flat it is. 
+Check out text for examples. 
