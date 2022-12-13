@@ -1344,3 +1344,66 @@ Can even create a vectorized function with Vectorize().
 vsumsq <- Vectorize(sumsq, c("mu","sigma"))
 vsumsq(1:10, 1:10, x)
 ```
+
+# Debugging
+## Something's Wrong! 
+Can get following conditions: 
+
+* message: a generic notification/diagnostic produced by message(); exeution of function continues. 
+* warning: indication something is wrong, but not necessarily fatal; execution of function continues. produced by warning()
+* error: indication of fatal problem and execution stops. Produced by stop() function. 
+* condition: generic concept for indicating that something unexpected occurred, can create custom conditions. 
+
+Example: calcuating log(-1) will give NaN. 
+Lets you know that taking the log of a negative number results in a NaN value. Doesn't give error, because it does have a value it can return: NaN. Warning is just to let you know something happened.  
+Error can pop if you don't take factors into account. 
+For example: passing NA or NaN to an inequality will throw an error and cause the function to stop. If you suspect Na or NaN, should have if(is.na(x)) first and a way to handle it. 
+Can get an error if incorrect input. Passing a vector to if will give an error since that function isn't vectorized. Can handle by creating a case to check length and stop the function. Can also create a new function with Vectorize().  
+
+## Figuring out what's wrong 
+Primary task is diagnosing what problem is. Important to first understand what is expected to occur, then identify what should have happened and how it deviated. Questions to ask: 
+
+* What was your input, how did you call the funtion? 
+* What were you expecting? output, messages, other results? 
+* What did you get? 
+* How does what you get differ from what you were expecting? 
+* Were your expectations correct? 
+* Can you reproduce the problem? 
+
+## Debugging Tools in R
+
+* traceback(): prints out the function call stack after an error occurs; does nothing if no error. 
+* debug(): flags a function for "debug" mode which allows you to step through execution of a function one line at a time. 
+* browser(): suspends the execution of a function whenever it is called and puts the function in debug mode
+* trace(): allows you to insert debugging code into a function in specific places
+* recover(): allows you to modify error behavior so you can browse the function call stack. 
+
+## traceback()
+Prints out the function call stack after error has occured. Function call stack is sequence of functions that was called before error occured. May have a() calling b() calling c() calling d(), finding where the error occured can be tricky without traceback(). 
+```{r, error = TRUE}
+mean(x)
+traceback(x)
+```
+Clear that error is in mean() because x doesn't exist.  
+traceback() must be called immediately after error occurs. 
+```{r, error = TRUE}
+lm(y ~ x)
+traceback()
+```
+Shows error was not thrown till 7th level of function call stack when eval() realized y object does not exist. 
+Useful to find roughly were error is, but not useful for detailed debugging. For that, turn to debug().  
+
+## debug()
+Makes an interactive debugger browser. Step through function one expression at a time to find where error occurs. 
+```{r, error = TRUE}
+debug(lm)
+lm(y ~ x)
+```
+Now, every time lm() is called, it will launch debugger. Turn off with undebug(). 
+Calls browswer on top level of function body. Then steps through eack expression. Special commands to call in browser: 
+
+* `n` executes current expression and moves to next
+* `c` continues with execution of function and doesn't stop till either error or function completes. 
+* `Q` quits browser. 
+
+While in browser, can execute any other R function available in regular session. In particular, `ls()` to see current environment and `print()` to print out values of R objects in function environment. 
