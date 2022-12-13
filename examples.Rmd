@@ -1263,3 +1263,84 @@ apply(x,2,mean) #take mean of each column
 apply(x,1,sum) # sum of each row
 ```
 What is the margin argument? Whichever dimension of the array you want to retain. When taking the mean of columns, 2 specifies keeping columns and collapsing rows. WHen taking sum of rows, 1 specifies keeping rows and collapsing columns. 
+
+## Col/Row Sums and Means
+Special case of column/row sums and means of matrices: 
+
+* rowSums = apply(x,1,sum)
+* rowMeans = apply(x,1,mean)
+* colSums = apply(x,2,sum)
+* colMeans = apply(x,2,mean(
+
+These shortcuts are optimized, faster, and descriptive. 
+
+## Other ways to apply
+Can compute other things such as quantile
+```{r}
+x <- matrix(rnorm(200),20,10)
+# Get row quantiles
+apply(x, 1, quantile, probs = c(0.25, 0.75))
+```
+Higher dimension example of averages of matrices
+```{r}
+a <- array(rnorm(2*2*10), c(2, 2, 10))
+apply(a, c(1,2), mean)
+```
+Indicated via margin argument that first and second dimensions are preserved and third dimension is collapes via the mean. 
+
+## mapply()
+multivariate apply which applies a function in parallel over a set of arguments. Recall lapply and similar functions only iterate over a single object, mapply does multiple objects in parallel.  
+```{r}
+str(mapply)
+```
+Arguments: 
+
+* FUN is a function to apply
+* ... contains R objects to apply over
+* MoreArgs is a list of other arguments to FUN
+* SIMPLIFY indicates whether result should be simplified. 
+
+Different argument order from lapply. 
+Example: typing the following is tedious: 
+`list(rep(1, 4), rep(2, 3), rep(3, 2), rep(4, 1))`
+With mapply: 
+```{r}
+mapply(rep, 1:4, 4:1)
+```
+This passes the sequence 1:4 to the first argument of rep() and 4:1 to the second. 
+Example for random normal variables
+```{r}
+noise <- function(n,mean,sd) {
+        rnorm(n,mean,sd)
+}
+# Simulate 5 random numbers
+noise(5, 1, 2)
+# This only simulates 1 set of numbers, not 5
+noise(1:5, 1:5, 2)
+# Use mapply() to pass 1:5 separately to function so we get 5 sets
+# of random numbers, each with different length and mean
+mapply(noise(1:5, 1:5, 2)
+# This is the same as
+list(noise(1, 1, 2), noise(2, 2, 2), noise(3, 3, 2), 
+        noise(4, 4, 2), noise(5, 5, 2))
+```
+
+## Vectorizing a Function
+mapply() can be used to automatically vectorize a function, meaning it can be used to take a function that typically  only takes single arguments and create a new function that can take vector arguments. Often needed when you want to plot functions. 
+Example of function that computes sum of squares
+```{r}
+sumsq <- function(mu, sigma, x) {
+        sum(((x - mu) / sigma)^2)
+}
+```
+This function takes a mean `mu`, a standard deviation `sigma`, and some data in a vector `x`.  
+In many stats applications, we want to minimize sum of squares to find optimal `mu` and `sigma`. Before we do that, we may want to evaluate or plot the function for many different values of `mu` or `sigma`. However, passing a vector of `mu`'s and `sigma`s won't work with this function since its not vectorized. 
+Use mapply
+```{r}
+mapply(sumsq,1:10, 1:10, MoreArgs = list(x = x))
+```
+Can even create a vectorized function with Vectorize(). 
+```{r}
+vsumsq <- Vectorize(sumsq, c("mu","sigma"))
+vsumsq(1:10, 1:10, x)
+```
