@@ -1101,3 +1101,165 @@ By no means universal.
 **Indent your code** Greatly helps readability. Min 4 spaces, 8 ideal.  
 **Limit the width of code** Limit width of text editor so it doesn't fly off right hand side. Deliberately limits ability to write very long functions with many levels of nesting.  
 **Limit length of individual functions** Ideal purpose of function is to execute one activity or idea. Rule of thumb: no more than one page of editor. 
+
+#Skipped Section 17
+
+# Loop Functions
+## Looping on the Command Line
+Writing for and while loops is useful when programming but not as easy on command line. Compact looping functions: 
+
+* lapply(): loop over a list and evaluate a function on each element
+* sapply(): same as lapply but try to simplify result
+* apply(): apply a function over the margins of an array
+* tapply(): apply a function over subsets of a vector
+* mapply(): multivariate version of lapply
+
+Auxiliary function split is also useful, particularly in conjunction with lapply. 
+
+## lapply()
+Does the following: 
+
+1. Loops over list, iterating over each element of list
+2. applys a function to each element of list
+3. returns a list
+
+Takes 3 arguments: 1, a list, 2, a function and 3, other arguments via .... If x is not a list, it will be coerced to one using as.list().  
+```{r}
+lapply
+```
+Note looping is done internally in C for efficiency. 
+Note lapply() returns a list.  
+Example of applying mean to a list. 
+```{r}
+x <- list(a = 1:5, b = rnorm(10))
+lapply(x,mean)
+```
+Passing the mean function as an argument to lapply will apply mean to each element of the list. Note you don't need () on the function.  
+Can use lapply to evaluate a function multiple times with each different argument. runif() generates uniform distributed random variables according to number input.  
+```{r}
+x <- 1:4
+lapply(x,runif)
+```
+When you pass a function to lapply, it takes elements of the list and passes them as the *first argument* of the function you are applying. In above, first argument of runif is n, so elements of 1:4 got passed to n argument of runif.  
+Can have other arguments for function. Fill them with the ... argument of lapply.  
+```{r}
+x <- 1:4
+lapply(x,runif, min = 0, max = 10)
+```
+This passes min = 0 and max = 10 to runif every time.  
+lapply and company use a lot of anonymous functions that are generated on the fly. 
+```{r}
+x <- list(a = matrix(1:4, 2, 2), b = matrix(1:6, 3, 2))
+# Suppose we want to extract first column of each matrix in a list. 
+lapply(x, function(elt) {elt[,1]})
+```
+Function definition inside lapply! Use anonymous functions for one off, if going to use repeatedly, better to define it separately. 
+
+## sapply()
+Similar to lapply, but tries to simplify output. 
+
+* If result is list with every element is length 1, returns a vector
+* if result is a list with every element a vector of same length, returns matrix
+* If can't parse, a list is returned. 
+
+## split()
+Takes a vector or other object and splits it into groups determined by a factor or list of factor.  
+Arguments: 
+```{r}
+str(split)
+```
+where: 
+
+* x is a vector (or list) or data frame
+* f is a factor (or coerced to one) or a list of factors
+* drop indictates whether empty factors levels should be dropped
+
+Combination of split and lapply, sapply is common in R. Paradigm is you take a data structure, split it into subsets defined by another variable, and apply a function over the subsets. Result is collated and returned as an object. Sometimes referred to "map-reduce". 
+```{r}
+x <- c(rnorm(10), runif(10), rnorm(10,1))
+f <- gl(3,10) # generate levels in a factor variable
+split(x,f)
+# commonly see split followed by lapply. 
+lapply(split(x,f),mean)
+```
+## Splitting a data frame
+```[r}
+library(datasets)
+head(airquality)
+# split by Month variable
+s <- split(airquality, airquality$Month)
+str(s)
+# Can then take column means for Ozone, Solar.R and Wind for each sub-data frame. 
+lapply(s,function(x) {
+        colMeans(x[, c("Ozone","Solar.R", "Wind")]
+        na.rm = TRUE)
+})
+# sapply may be better for more readable output
+sapply(s,function(x) {
+        colMeans(x[, c("Ozone","Solar.R","Wind")]
+        na.rm = TRUE)
+})
+```
+We may sometimes want to split an R object according to multiple variables. Can do this by creating an interaction with interaction(). 
+```{r}
+x <- rnorm(10)
+f1 <- gl(2,5)
+f2 <- gl(5,2)
+f1
+f2
+# Create interaction
+interaction(f1,f2)
+# With multiple factors and many levels, creating an interaction may result in 
+# many levels that are empty
+str(split(x,list(f1,f2)))
+# notice 4 empty categories, can drop empty when calling split. 
+str(split(x,list(f1,f2), drop = TRUE))
+```
+
+# tapply
+used to  apply function over subsets of vector. Essentially combination of split and sapply for vectors only. 
+```{r}
+str(tapply)
+```
+Arguments: 
+
+* X is a vector
+* INDEX is a factor or list of factors
+* FUN is function to be applied
+* ... other arguments to be passed to FUN
+* simplify, should we simplify? 
+
+Group means
+```{r}
+# simulate data
+x <- c(rnorm(10), runif(10), rnorm(10,1))
+# Define groups
+f <- gl(3,10)
+tapply(x,f,mean)
+
+# Can also take group means without simplifying result, giving list. 
+tapply(x,f,mean,simplify = FALSE)
+
+# Can also use with functions that return more than one value
+tapply(x,f,range)
+```
+
+## apply()
+Evaluate a function (often anonymous) over margins of array, most often apply functon to rows or columns of a matrix (a 2d array). Can be used with general arrays, for example, to take the average of an array of matrices. Not really faster than a loop, but works in one line. 
+```{r}
+str(apply)
+```
+
+Arguments: 
+
+* X is an array
+* MARGIN is an integer vector indicating which margins should be 'retained'
+* FUN is a function to be applied
+* ... is for other arguments to be passed to FUN
+
+```{r}
+x <- matrix(rnorm(200),20,10) # 20 by 10 matrix of random normal numbers. 
+apply(x,2,mean) #take mean of each column
+apply(x,1,sum) # sum of each row
+```
+What is the margin argument? Whichever dimension of the array you want to retain. When taking the mean of columns, 2 specifies keeping columns and collapsing rows. WHen taking sum of rows, 1 specifies keeping rows and collapsing columns. 
