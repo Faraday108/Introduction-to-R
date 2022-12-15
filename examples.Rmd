@@ -1407,3 +1407,11 @@ Calls browswer on top level of function body. Then steps through eack expression
 * `Q` quits browser. 
 
 While in browser, can execute any other R function available in regular session. In particular, `ls()` to see current environment and `print()` to print out values of R objects in function environment. 
+
+## recover()
+Can be used to modify the error behavior of R. Normally, R prints error messages, exits function, and returns to workspace. With recover(), can tell R to halt execution at exact point error occurred so you can see the environment in which it occurred. 
+```{r, error = TRUE}
+options(error = recover) # changes default R error behavior
+read.csv("nosuchfile")
+```
+Will print out function call stack and you have option to go to frame number, where you will be put in browser just like debug(). 
