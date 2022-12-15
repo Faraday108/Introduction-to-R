@@ -1345,6 +1345,107 @@ vsumsq <- Vectorize(sumsq, c("mu","sigma"))
 vsumsq(1:10, 1:10, x)
 ```
 
+# Regular Expressions
+## Primary R Functions
+Primary R functions for dealing with regular expressions. 
+
+* grep(), grepl(): search for matches of a regular expression/pattern in a character vector. grep() returns the indices that contain a match or the specific strings that happen to have a match. grepl() returns a TRUE/FALSE vector indicating which elements of the character vector contain a match. 
+* regexpr(), gregexpr(): search character vector for regular expression matches and return the indices of the string where the match begins and the length of the match. 
+* sub, gsub(): search a character vector for regular expressions and replace that match with another string. 
+* regexc(): searches character vector for a regex like regexpr(), but additionally returns locations for any parenthesized sub-expressions. 
+
+Examples in text: file is unavailable so I'll just include the code blocks and not calculate them. 
+```{r, eval = FALSE}
+homicides <- readLines("homicides.txt")
+# Total number of events recorded
+length(homicides) # 1571
+```
+Data is formatted so each homicide is presented as a single line of text so each character vector is one homicide event and the data is riddled with html tags since it was scraped directly from the web. 
+Features that stand out: address, age, race, gender, date found, hospital died, cause of death.  
+
+## grep()
+Supposed we want to identify records for all victims of shootings only? From map, each cause of death is flagged a different icon/color noted as iconhomicideshooting. Can use grep() to match into character vector of homicides. 
+```{r, eval = FALSE}
+g <- grep("iconHomicideShooting", homicides)
+length(g) # 288
+```
+Examining the flags again, an additional tag for shooting deaths can be seen. Include with the or operator |. 
+```{r, eval = FALSE}
+g <- grep("iconHomicideShooting|icon_homicide_shooting",homicides)
+length(g) #1263
+```
+More deaths! 
+
+Can use another field: cause of death which seems to have format Cause: shooting
+```{r, eval = FALSE}
+g <- grep("Cause: [Ss]hooting", homicides)
+length(g)
+```
+Not including [Ss] multiple cases would have excluded some values. 
+Be careful to not grep() out of context, calling [Ss]hooting without Cause: context would have given extra results. Can find which were different by checking index of all results and finding which are different. 
+```{r, eval = FALSE}
+i <- grep("[cC]ause: [Ss]hooting", homicides)
+j <- grep("[Ss]hooting", homicides)
+setdiff(j,i) # 318 and 859 are different!
+```
+Can take a look at these two entries and see that the word [Ss]hooting occurrs in the narrative text that accompanies the data.  
+
+If we want to find elements of vector that match a pattern but want the actual values, include setting value = True
+```{r}
+grep("^New", state.name, value = TRUE)
+```
+## grepl()
+WOrks like grep() except in its return value where it returns a logical vector indicating which element of a character vector contain the match. 
+```{r}
+g <- grepl("^New", state.name)
+g
+state.name[g]
+```
+Logical vector can be used to subset original vector. 
+
+## regexpr()
+Both grep() and grepl() have limitations: both functions tell you which strings in a character vector match a certain pattern but don't tell you where the match occurs or what the match is for a more complicated regex. 
+`regexpr()` gives you (a) index into each string where the match begins and (b) length of match for that string. regexpr() gives only *first* match of string, gregexpr() gives all. 
+In homicide dataset (not available), may be interested in finding date on which each victim was found. Using "Found" may be elsewhere in entry so not best tag. Seems to be usually preceeded by "Found on" and surrounded by <dd></dd> so a better tag would be: `<dd>[F|f]ound(.*)</dd>`
+Viewing the results would show this regex was too greedy and kept matching too much of the string and make it lazier with ? to stop at first </dd> tag. 
+```{r, eval = FALSE}
+r <- regexpr("<dd>[F|f]ound(.*?)</dd>",homicides[1:10])
+# To get matches out of original data, regmatches() extracts strings
+regmatches(homicides[1:10], r)
+```
+## sub() and gsub()
+Cleaning up or modifying strings by matching a pattern. 
+For example: maybe want to remove html tags. 
+```{r}
+str1 <- "<dd>Found on January 1, 2017</dd>"
+gsub("<dd>[F|f]ound on |</dd>", "", str1)
+```
+gsub looked for all matches, sub would stop at first match from regex. can take vector arguments so you don't have to process strings individually. 
+```{r}
+x <- c("<dd>Found on January 1, 2007</dd>", "<dd>Found on January 2, 2007</dd>", "<dd>Found on January 2, 2007</dd>", "<dd>Found on January 3, 2007</dd>", "<dd>Found on January 5, 2007</dd>")
+d <- gsub("<dd>[F|f]ound on |</dd>", "",x)
+d
+# Convert to date
+as.Date(d, "%B %d, %Y")
+```
+## regexc()
+Gives indices for parenthesized sub-expressions.  
+Can create regex including (), such as targeting a specific string (like the date in the prior example), and regexc() will give you the indices where the overall match begins and where the expression in parenthesis begins. 
+`<dd>[F|f]ound on (.*?)</dd>`
+Can then call the matches to regmatches() and will return list with both results. 
+
+## stringr Package
+Part of tidyverse collection of packages and wraps the underlying strini package in a series of convenience functions, hiding some of the complexity of using base R regex in stringr functions. Gives more rational interface to regex and more consistency in arguments and argument ordering.  
+In general, for stringr functions, data is first argument, regex is second, and optional arguments afterwards.  
+`str_subset()` is much like `grep(value = TRUE)` and returns a character vector of strings that contain a match. 
+```{r, eval = FALSE}
+library(stringr)
+g <- str_subset(homicides, "iconHomicideShooting")
+length(g) #228
+```
+
+
+
 # Debugging
 ## Something's Wrong! 
 Can get following conditions: 
