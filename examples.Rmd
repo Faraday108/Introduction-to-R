@@ -1532,6 +1532,112 @@ Will print out function call stack and you have option to go to frame number, wh
 The str() function, in the words of Peng, is one of the most useful functions in R as it is able to provide a summary of any object in R. If you want to find out more about a data set whether it be a list, vector, data frame, etc he recommends calling str on it to see a summary info. 
 
 # Profiling R Code
-Summary
+R comes with a profiler to help optimize code. NOTE: in general bad idea to focus on optimizing at beginning of development. Instead, focus on translating ideas to code that is coherent and readable. Optimized code tends to be difficult to read.  
+What to optimize? Parts of code that run slowly. A profiler is a way to examine how much time is spent in different parts of a program.  
+Sometimes becomes necessary when a project grows and layers - an okay piece can be looped many times to take too long.  
+Tempting to assume the writer knows where the slow downs are - best practice is to use profiling (collect data on where code spends most time) rather than operate on hunches. 
+Principles: 
+
+* Design first, then optimize
+* Remember: premature optimization is root of all evil
+* Measure (collect data), don't guess
+* If you're going to be a *scientist*, same principles apply to code. 
 
 ## Using system.time()
+Takes an arbitrary R expression as input (can be wrapped in curly braces) and returns amount of time to evaluate. Returns class `proc_time` with two pieces: 
+
+* *user time*: time charged to CPU(s) for this expression. 
+* *elapsed time*: "wall clock" time, amount of time that passes for *you* sitting there. 
+
+Usually, user and elapsed are close, for straight computing tasks. Elapsed can be greater than CPU if CPU spends a lot of time waiting. Commonly happens if involves input or output which depends on activity of file system and disk (or internet). 
+Elapsed may be smaller than user time if machine uses multiple cores. Multi-threaded BLAS libraries can speed up linear algebra calculations. Parallel processing done via something like `parallell` package can make elapsed time smaller than user time. 
+Example of elapsed more than user: 
+```{r}
+system.time(readLines("http://www.jhsph.edu"))
+```
+Most time is spent waiting for connection to web server. 
+User more than elapsed. 
+```{r}
+hilbert <- function(n) {
+    i <- 1:n
+    1 / outer(i - 1, i, "+")
+}
+x <- hilbert(1000)
+system.time(svd(x))
+```
+Ran singluar value decomposition on matrix in `x`, common linear algebra procedure. Because computer can split work across multiple processors, elapsed time is about half user time. 
+
+## Timing longer expressions
+Wrap in curley braces within call to `system.time()`. 
+```{r}
+system.time({
+  n <- 1000
+  r <- numeric(n)
+  for(i in 1:n) {
+    x <- rnorm(n)
+    r[i] <- mean(x)
+  }
+})
+```
+If expression is too long, might want to break it into smaller pieces to help profiler identify which part of code causes bottleneck. 
+
+## The R Proflier
+`system.time()` lets you test blocks of code you suspect might take too long, but what if you don't know where problem is? `Rprof()` starts profiler in R. Note that R must be complied with profiler support, usually the case. Use summaryRprof() to create readable output in conjunction with Rprof(). Do not use system.time() and Rprof() together.  
+`Rprof()` keeps track of the function call stack at regularly sampled intervals and tablulates how much time is spent inside each function. By default, samples function call stack every 0.02 seconds.  
+Started by calling `Rprof()` function. 
+```{r, eval = FALSE}
+Rprof()
+```
+No other arguments needed. Default writes output to file called Rprof.out.  
+Once Rprof is called, everything you do from then will be measured by profiler. Therefore, you usually only want to run a single R function or expression and then immediately turn off. Too many function calls - results will be mixed together and you can't tell where bottlenecks are. `Rprof(NULL)` to turn off. 
+
+## Using `summaryRprof()`
+Tabluates R proiler output and calculates how much time is spent in which function. Two methods for normalizing data. 
+
+* "by.total" divides the time spent in each function by the total run time
+* "by.self" does the same as "by.total" but first subtracts out time spent in functions above the current function in the call stack. Author finds this more useful. 
+
+By total output initially shows 100% of time is spent in function but doesn't show that if function immediately calls another (like lm calls lm.fit()) then in reality most of time is spent in second function. By.self corrects this discrepancy. 
+
+# Simulation
+## Generating Random Numbers
+Simulation is an important topic for both stats and other areas where randomness is needed. Markhov chain Monte Carlo, boostrap, random forests, bagging. Sometimes you want to simulate a system and random number generation can be used to model random inputs.  
+R comes with a set of pseudo-random n umber generators to simulate from Normal, Poisson, and binomial.  
+
+* `rnorm`: generate random Normal variates with given mean and standard deviation. 
+* `dnorm`: evaluate the Normal probability density (with given mean/SD) at a point (or vector of points)
+* `pnorm`: evaluate the cumulative distribution function for a Normal distribution
+* `rpois`: Poisson variates at given rate. 
+
+For each probability distribution typicall 4 functions: "r", "d", "p", and "q". "r" simulates random numbers. Others: 
+
+* `d` for density
+* `r` for randon number generation
+* `p` for cumulative distribution
+* `p` for quantile function (inverse of cumulative distribution)
+
+If you're only interested in simulating random numbers, will likely only need 'r' function. However if you want to sample different distributions using something like rejection sampling, need other functions too.  
+Normal/Gaussian is most common. 
+```{r, eval = FALSE}
+dnorm(x, mean = 0, sd = 1, log = FALSE)
+pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
+qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
+rnorm(n, mean = 0, sd = 1)
+```
+Here simulate standard Normal random numbers with mean 0 and sd 1
+```{r}
+x <- rnorm(10)
+x
+```
+Modify default parameters: 
+```{r}4
+x <- rnorm(10, 20, 2)
+x
+summary(x)
+```
+If you want to know probability of random Normal variable being less than 2: 
+```{r}
+pnorm(2)
+```
+
+## Setting random number seed
