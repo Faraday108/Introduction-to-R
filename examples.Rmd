@@ -1527,3 +1527,11 @@ options(error = recover) # changes default R error behavior
 read.csv("nosuchfile")
 ```
 Will print out function call stack and you have option to go to frame number, where you will be put in browser just like debug(). 
+
+# Aside: str()
+The str() function, in the words of Peng, is one of the most useful functions in R as it is able to provide a summary of any object in R. If you want to find out more about a data set whether it be a list, vector, data frame, etc he recommends calling str on it to see a summary info. 
+
+# Profiling R Code
+Summary
+
+## Using system.time()
