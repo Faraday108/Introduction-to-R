@@ -1661,5 +1661,73 @@ rpois(10, 20) # Counts with a mean of 20
 
 ## Simulating a Linear Model
 Simulating random numbers is useful, but sometimes we want to simulate values from a specific model. 
-Suppose we want to simulate from the following linear model: 
-$y = \beta_{0} + \beta_{1} x + \epsilon$
+Suppose we want to simulate from the following linear model:  
+$y = \beta_{0} + \beta_{1} x + \epsilon$  
+where $\epsilon \sim \mathcal{N}(0,2^{2})$. Assume $x \sim \mathcal{N}(0, 1^{2}), \beta_{0} = 0.5$ and $\beta_{1} = 2$. The variable `x` might represent an important predictor of the outcome `y`. In R:  
+```{r}
+# set seed
+set.seed(20)
+# simulate predictor variable
+x <- rnorm(100)
+
+# simulate error term
+e <- rnorm(100,0,2)
+# Compute outcome via model
+y <- 0.5 + 2 * x + e
+summary(y)
+plot(x,y
+```
+
+Simulate predictor variable x that is binary: 
+```{r}
+set.seed(10)
+x <- rbinom(100, 1, 0.5)
+str(x) # 'x' is now 0's and 1's
+e <- rnorm(100, 0, 2)
+y <- 0.5 + 2 * x + e
+plot(x,y)
+```
+Can also simulate *generalized linear model* where errors are no longer normal, but other distribution. Example: Poisson log-linear
+$ Y \sim Poisson(\mu)$
+$ \log \mu = \beta_{0} + \beta_{1}x$  
+and $\beta_{0} = 0.5$ and $\beta_{1} = 0.3$. We need to use the `rpois()` function for this.  
+```{r}
+set.seed(1)
+# Simulate predictor as before
+x <- rnorm(100)
+```
+Now need to compute log mean of model and then exponentiate it to get the mean to pass to rpois. 
+```{r}
+log.mu <- 0.5 + 0.3 * x
+y <- rpois(100, exp(log.mu))
+summary(y)
+plot(x,y)
+```
+Can build arbitrarily complex models by simulating more predictors or transforming predictors. 
+
+## Random Sampling
+`sample()` draws randomly from a specified set of scalar objects.  
+```{r}
+set.seed(1)
+sample(1:10,4)
+sample(1:10,4)
+#doesn't have to be numbers
+sample(letters,5)
+# random permutation
+sample(1:10)
+sample(1:10)
+# sample with replacement
+sample(1:10, replace = TRUE)
+```
+To sample more complicated things like rows from data frame or list, sample the indices rather than the object. 
+```{r}
+library(datasets)
+data(airquality)
+head(airquality)
+# Create index vector of rows. 
+set.seed(20)
+idx <- seq_len(nrow(airquality))
+#sample from index vector
+samp <- sample(idx,6)
+airquality[samp, ]
+```
