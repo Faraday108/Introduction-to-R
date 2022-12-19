@@ -1309,7 +1309,7 @@ mapply(rep, 1:4, 4:1)
 ```
 This passes the sequence 1:4 to the first argument of rep() and 4:1 to the second. 
 Example for random normal variables
-```{r}
+```{r,error = TRUE}
 noise <- function(n,mean,sd) {
         rnorm(n,mean,sd)
 }
@@ -1319,7 +1319,7 @@ noise(5, 1, 2)
 noise(1:5, 1:5, 2)
 # Use mapply() to pass 1:5 separately to function so we get 5 sets
 # of random numbers, each with different length and mean
-mapply(noise(1:5, 1:5, 2)
+mapply(noise(1:5, 1:5, 2))
 # This is the same as
 list(noise(1, 1, 2), noise(2, 2, 2), noise(3, 3, 2), 
         noise(4, 4, 2), noise(5, 5, 2))
