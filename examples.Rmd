@@ -1057,8 +1057,8 @@ Lexical scoping in R has consequences beyond how free variables are looked up. P
 Why is this info on lexical scoping useful? 
 Optimization routines in R like optim(), nlm(), and optimize() require you to pass a function whose argument is a vector of parameters (eg log-liklihood, or cost function). However, an objective function that needs to be optimized might depend on a host of other things (like data). WHen writing optimizers, it might be desirable to allow user to hold certain parameters fixed. Scoping rules of R allow you abstract away much of the complexity involved in these kinds of problems. 
 Example of a constructor that creates a negative log-liklihood function that can be minimized to find maximum liklihood estimates in a statistical model. 
-```{r, eval = FALSE}
-make.NegLogLik <- function(data, fixed = c(False, False)) {
+```{r}
+make.NegLogLik <- function(data, fixed = c(FALSE, FALSE)) {
   params <- fixed
   function(p) {
     params[!fixed] <- p
