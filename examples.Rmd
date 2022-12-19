@@ -1641,3 +1641,25 @@ pnorm(2)
 ```
 
 ## Setting random number seed
+When simulating a set of random numbers, it is essential to set the *random number seed*. This ensures reproducibility of the sequence of random numbers.  
+```{r}
+set.seed(1)
+rnorm(5) 
+#calling rnorm again gets different set of 5
+rnorm(5)
+# resetting seed, gets same 5 again. 
+set.seed(1)
+rnorm(5)
+```
+In general, **always set the random number seed when conductiong a simulation**. Otherwise, you will not be able to reconstruct the same set of numbers.  
+Can generate numbers from other probability distributions like Poisson (model data in the form of counts).  
+```{r}
+rpois(10,1) #counts with a mean of 1
+rpois(10, 2) # counts with a mean of 2
+rpois(10, 20) # Counts with a mean of 20
+```
+
+## Simulating a Linear Model
+Simulating random numbers is useful, but sometimes we want to simulate values from a specific model. 
+Suppose we want to simulate from the following linear model: 
+$y = \beta + \beta x + \epsilon$
