@@ -1263,3 +1263,403 @@ apply(x,2,mean) #take mean of each column
 apply(x,1,sum) # sum of each row
 ```
 What is the margin argument? Whichever dimension of the array you want to retain. When taking the mean of columns, 2 specifies keeping columns and collapsing rows. WHen taking sum of rows, 1 specifies keeping rows and collapsing columns. 
+
+## Col/Row Sums and Means
+Special case of column/row sums and means of matrices: 
+
+* rowSums = apply(x,1,sum)
+* rowMeans = apply(x,1,mean)
+* colSums = apply(x,2,sum)
+* colMeans = apply(x,2,mean(
+
+These shortcuts are optimized, faster, and descriptive. 
+
+## Other ways to apply
+Can compute other things such as quantile
+```{r}
+x <- matrix(rnorm(200),20,10)
+# Get row quantiles
+apply(x, 1, quantile, probs = c(0.25, 0.75))
+```
+Higher dimension example of averages of matrices
+```{r}
+a <- array(rnorm(2*2*10), c(2, 2, 10))
+apply(a, c(1,2), mean)
+```
+Indicated via margin argument that first and second dimensions are preserved and third dimension is collapes via the mean. 
+
+## mapply()
+multivariate apply which applies a function in parallel over a set of arguments. Recall lapply and similar functions only iterate over a single object, mapply does multiple objects in parallel.  
+```{r}
+str(mapply)
+```
+Arguments: 
+
+* FUN is a function to apply
+* ... contains R objects to apply over
+* MoreArgs is a list of other arguments to FUN
+* SIMPLIFY indicates whether result should be simplified. 
+
+Different argument order from lapply. 
+Example: typing the following is tedious: 
+`list(rep(1, 4), rep(2, 3), rep(3, 2), rep(4, 1))`
+With mapply: 
+```{r}
+mapply(rep, 1:4, 4:1)
+```
+This passes the sequence 1:4 to the first argument of rep() and 4:1 to the second. 
+Example for random normal variables
+```{r}
+noise <- function(n,mean,sd) {
+        rnorm(n,mean,sd)
+}
+# Simulate 5 random numbers
+noise(5, 1, 2)
+# This only simulates 1 set of numbers, not 5
+noise(1:5, 1:5, 2)
+# Use mapply() to pass 1:5 separately to function so we get 5 sets
+# of random numbers, each with different length and mean
+mapply(noise(1:5, 1:5, 2)
+# This is the same as
+list(noise(1, 1, 2), noise(2, 2, 2), noise(3, 3, 2), 
+        noise(4, 4, 2), noise(5, 5, 2))
+```
+
+## Vectorizing a Function
+mapply() can be used to automatically vectorize a function, meaning it can be used to take a function that typically  only takes single arguments and create a new function that can take vector arguments. Often needed when you want to plot functions. 
+Example of function that computes sum of squares
+```{r}
+sumsq <- function(mu, sigma, x) {
+        sum(((x - mu) / sigma)^2)
+}
+```
+This function takes a mean `mu`, a standard deviation `sigma`, and some data in a vector `x`.  
+In many stats applications, we want to minimize sum of squares to find optimal `mu` and `sigma`. Before we do that, we may want to evaluate or plot the function for many different values of `mu` or `sigma`. However, passing a vector of `mu`'s and `sigma`s won't work with this function since its not vectorized. 
+Use mapply
+```{r}
+mapply(sumsq,1:10, 1:10, MoreArgs = list(x = x))
+```
+Can even create a vectorized function with Vectorize(). 
+```{r}
+vsumsq <- Vectorize(sumsq, c("mu","sigma"))
+vsumsq(1:10, 1:10, x)
+```
+
+# Regular Expressions
+## Primary R Functions
+Primary R functions for dealing with regular expressions. 
+
+* grep(), grepl(): search for matches of a regular expression/pattern in a character vector. grep() returns the indices that contain a match or the specific strings that happen to have a match. grepl() returns a TRUE/FALSE vector indicating which elements of the character vector contain a match. 
+* regexpr(), gregexpr(): search character vector for regular expression matches and return the indices of the string where the match begins and the length of the match. 
+* sub, gsub(): search a character vector for regular expressions and replace that match with another string. 
+* regexc(): searches character vector for a regex like regexpr(), but additionally returns locations for any parenthesized sub-expressions. 
+
+Examples in text: file is unavailable so I'll just include the code blocks and not calculate them. 
+```{r, eval = FALSE}
+homicides <- readLines("homicides.txt")
+# Total number of events recorded
+length(homicides) # 1571
+```
+Data is formatted so each homicide is presented as a single line of text so each character vector is one homicide event and the data is riddled with html tags since it was scraped directly from the web. 
+Features that stand out: address, age, race, gender, date found, hospital died, cause of death.  
+
+## grep()
+Supposed we want to identify records for all victims of shootings only? From map, each cause of death is flagged a different icon/color noted as iconhomicideshooting. Can use grep() to match into character vector of homicides. 
+```{r, eval = FALSE}
+g <- grep("iconHomicideShooting", homicides)
+length(g) # 288
+```
+Examining the flags again, an additional tag for shooting deaths can be seen. Include with the or operator |. 
+```{r, eval = FALSE}
+g <- grep("iconHomicideShooting|icon_homicide_shooting",homicides)
+length(g) #1263
+```
+More deaths! 
+
+Can use another field: cause of death which seems to have format Cause: shooting
+```{r, eval = FALSE}
+g <- grep("Cause: [Ss]hooting", homicides)
+length(g)
+```
+Not including [Ss] multiple cases would have excluded some values. 
+Be careful to not grep() out of context, calling [Ss]hooting without Cause: context would have given extra results. Can find which were different by checking index of all results and finding which are different. 
+```{r, eval = FALSE}
+i <- grep("[cC]ause: [Ss]hooting", homicides)
+j <- grep("[Ss]hooting", homicides)
+setdiff(j,i) # 318 and 859 are different!
+```
+Can take a look at these two entries and see that the word [Ss]hooting occurrs in the narrative text that accompanies the data.  
+
+If we want to find elements of vector that match a pattern but want the actual values, include setting value = True
+```{r}
+grep("^New", state.name, value = TRUE)
+```
+## grepl()
+WOrks like grep() except in its return value where it returns a logical vector indicating which element of a character vector contain the match. 
+```{r}
+g <- grepl("^New", state.name)
+g
+state.name[g]
+```
+Logical vector can be used to subset original vector. 
+
+## regexpr()
+Both grep() and grepl() have limitations: both functions tell you which strings in a character vector match a certain pattern but don't tell you where the match occurs or what the match is for a more complicated regex. 
+`regexpr()` gives you (a) index into each string where the match begins and (b) length of match for that string. regexpr() gives only *first* match of string, gregexpr() gives all. 
+In homicide dataset (not available), may be interested in finding date on which each victim was found. Using "Found" may be elsewhere in entry so not best tag. Seems to be usually preceeded by "Found on" and surrounded by <dd></dd> so a better tag would be: `<dd>[F|f]ound(.*)</dd>`
+Viewing the results would show this regex was too greedy and kept matching too much of the string and make it lazier with ? to stop at first </dd> tag. 
+```{r, eval = FALSE}
+r <- regexpr("<dd>[F|f]ound(.*?)</dd>",homicides[1:10])
+# To get matches out of original data, regmatches() extracts strings
+regmatches(homicides[1:10], r)
+```
+## sub() and gsub()
+Cleaning up or modifying strings by matching a pattern. 
+For example: maybe want to remove html tags. 
+```{r}
+str1 <- "<dd>Found on January 1, 2017</dd>"
+gsub("<dd>[F|f]ound on |</dd>", "", str1)
+```
+gsub looked for all matches, sub would stop at first match from regex. can take vector arguments so you don't have to process strings individually. 
+```{r}
+x <- c("<dd>Found on January 1, 2007</dd>", "<dd>Found on January 2, 2007</dd>", "<dd>Found on January 2, 2007</dd>", "<dd>Found on January 3, 2007</dd>", "<dd>Found on January 5, 2007</dd>")
+d <- gsub("<dd>[F|f]ound on |</dd>", "",x)
+d
+# Convert to date
+as.Date(d, "%B %d, %Y")
+```
+## regexc()
+Gives indices for parenthesized sub-expressions.  
+Can create regex including (), such as targeting a specific string (like the date in the prior example), and regexc() will give you the indices where the overall match begins and where the expression in parenthesis begins. 
+`<dd>[F|f]ound on (.*?)</dd>`
+Can then call the matches to regmatches() and will return list with both results. 
+
+## stringr Package
+Part of tidyverse collection of packages and wraps the underlying strini package in a series of convenience functions, hiding some of the complexity of using base R regex in stringr functions. Gives more rational interface to regex and more consistency in arguments and argument ordering.  
+In general, for stringr functions, data is first argument, regex is second, and optional arguments afterwards.  
+`str_subset()` is much like `grep(value = TRUE)` and returns a character vector of strings that contain a match. 
+```{r, eval = FALSE}
+library(stringr)
+g <- str_subset(homicides, "iconHomicideShooting")
+length(g) #228
+```
+`str_detect()` is essentially equivalent to `grepl()`.  
+`str_extrat()` plays the role of `regexpr()` and `regmatches()`, extracting the matches from the output.  
+Finally, `str_match()` does the job of `regexec()` by providing a matric containing the parenthesized sub-expressions. 
+
+## Summary
+The primary R functions for dealing with regex are: 
+
+* `grep()`,`grepl()`: Search for matches of a regular expression/pattern in a character vector. 
+* `regexpr()`, `gregexpr()`: Search a character vector for regular expression matches and return the indices where the match begins; useful in conjunction with `regmatches()`. 
+* `sub()`, `gsub()`: Search a character vector for regular expression matches and replace that match with another string. 
+* `regexec()`: Gives you indices of parenthesized sub-expressions. 
+* The `stringr` package provides a series of functions implementing much of the regular expression functionality in R but with a more consistent and rationalized interface. 
+
+
+# Debugging
+## Something's Wrong! 
+Can get following conditions: 
+
+* message: a generic notification/diagnostic produced by message(); exeution of function continues. 
+* warning: indication something is wrong, but not necessarily fatal; execution of function continues. produced by warning()
+* error: indication of fatal problem and execution stops. Produced by stop() function. 
+* condition: generic concept for indicating that something unexpected occurred, can create custom conditions. 
+
+Example: calcuating log(-1) will give NaN. 
+Lets you know that taking the log of a negative number results in a NaN value. Doesn't give error, because it does have a value it can return: NaN. Warning is just to let you know something happened.  
+Error can pop if you don't take factors into account. 
+For example: passing NA or NaN to an inequality will throw an error and cause the function to stop. If you suspect Na or NaN, should have if(is.na(x)) first and a way to handle it. 
+Can get an error if incorrect input. Passing a vector to if will give an error since that function isn't vectorized. Can handle by creating a case to check length and stop the function. Can also create a new function with Vectorize().  
+
+## Figuring out what's wrong 
+Primary task is diagnosing what problem is. Important to first understand what is expected to occur, then identify what should have happened and how it deviated. Questions to ask: 
+
+* What was your input, how did you call the funtion? 
+* What were you expecting? output, messages, other results? 
+* What did you get? 
+* How does what you get differ from what you were expecting? 
+* Were your expectations correct? 
+* Can you reproduce the problem? 
+
+## Debugging Tools in R
+
+* traceback(): prints out the function call stack after an error occurs; does nothing if no error. 
+* debug(): flags a function for "debug" mode which allows you to step through execution of a function one line at a time. 
+* browser(): suspends the execution of a function whenever it is called and puts the function in debug mode
+* trace(): allows you to insert debugging code into a function in specific places
+* recover(): allows you to modify error behavior so you can browse the function call stack. 
+
+## traceback()
+Prints out the function call stack after error has occured. Function call stack is sequence of functions that was called before error occured. May have a() calling b() calling c() calling d(), finding where the error occured can be tricky without traceback(). 
+```{r, error = TRUE}
+mean(x)
+traceback(x)
+```
+Clear that error is in mean() because x doesn't exist.  
+traceback() must be called immediately after error occurs. 
+```{r, error = TRUE}
+lm(y ~ x)
+traceback()
+```
+Shows error was not thrown till 7th level of function call stack when eval() realized y object does not exist. 
+Useful to find roughly were error is, but not useful for detailed debugging. For that, turn to debug().  
+
+## debug()
+Makes an interactive debugger browser. Step through function one expression at a time to find where error occurs. 
+```{r, error = TRUE}
+debug(lm)
+lm(y ~ x)
+```
+Now, every time lm() is called, it will launch debugger. Turn off with undebug(). 
+Calls browswer on top level of function body. Then steps through eack expression. Special commands to call in browser: 
+
+* `n` executes current expression and moves to next
+* `c` continues with execution of function and doesn't stop till either error or function completes. 
+* `Q` quits browser. 
+
+While in browser, can execute any other R function available in regular session. In particular, `ls()` to see current environment and `print()` to print out values of R objects in function environment. 
+
+## recover()
+Can be used to modify the error behavior of R. Normally, R prints error messages, exits function, and returns to workspace. With recover(), can tell R to halt execution at exact point error occurred so you can see the environment in which it occurred. 
+```{r, error = TRUE}
+options(error = recover) # changes default R error behavior
+read.csv("nosuchfile")
+```
+Will print out function call stack and you have option to go to frame number, where you will be put in browser just like debug(). 
+
+# Aside: str()
+The str() function, in the words of Peng, is one of the most useful functions in R as it is able to provide a summary of any object in R. If you want to find out more about a data set whether it be a list, vector, data frame, etc he recommends calling str on it to see a summary info. 
+
+# Profiling R Code
+R comes with a profiler to help optimize code. NOTE: in general bad idea to focus on optimizing at beginning of development. Instead, focus on translating ideas to code that is coherent and readable. Optimized code tends to be difficult to read.  
+What to optimize? Parts of code that run slowly. A profiler is a way to examine how much time is spent in different parts of a program.  
+Sometimes becomes necessary when a project grows and layers - an okay piece can be looped many times to take too long.  
+Tempting to assume the writer knows where the slow downs are - best practice is to use profiling (collect data on where code spends most time) rather than operate on hunches. 
+Principles: 
+
+* Design first, then optimize
+* Remember: premature optimization is root of all evil
+* Measure (collect data), don't guess
+* If you're going to be a *scientist*, same principles apply to code. 
+
+## Using system.time()
+Takes an arbitrary R expression as input (can be wrapped in curly braces) and returns amount of time to evaluate. Returns class `proc_time` with two pieces: 
+
+* *user time*: time charged to CPU(s) for this expression. 
+* *elapsed time*: "wall clock" time, amount of time that passes for *you* sitting there. 
+
+Usually, user and elapsed are close, for straight computing tasks. Elapsed can be greater than CPU if CPU spends a lot of time waiting. Commonly happens if involves input or output which depends on activity of file system and disk (or internet). 
+Elapsed may be smaller than user time if machine uses multiple cores. Multi-threaded BLAS libraries can speed up linear algebra calculations. Parallel processing done via something like `parallell` package can make elapsed time smaller than user time. 
+Example of elapsed more than user: 
+```{r}
+system.time(readLines("http://www.jhsph.edu"))
+```
+Most time is spent waiting for connection to web server. 
+User more than elapsed. 
+```{r}
+hilbert <- function(n) {
+    i <- 1:n
+    1 / outer(i - 1, i, "+")
+}
+x <- hilbert(1000)
+system.time(svd(x))
+```
+Ran singluar value decomposition on matrix in `x`, common linear algebra procedure. Because computer can split work across multiple processors, elapsed time is about half user time. 
+
+## Timing longer expressions
+Wrap in curley braces within call to `system.time()`. 
+```{r}
+system.time({
+  n <- 1000
+  r <- numeric(n)
+  for(i in 1:n) {
+    x <- rnorm(n)
+    r[i] <- mean(x)
+  }
+})
+```
+If expression is too long, might want to break it into smaller pieces to help profiler identify which part of code causes bottleneck. 
+
+## The R Proflier
+`system.time()` lets you test blocks of code you suspect might take too long, but what if you don't know where problem is? `Rprof()` starts profiler in R. Note that R must be complied with profiler support, usually the case. Use summaryRprof() to create readable output in conjunction with Rprof(). Do not use system.time() and Rprof() together.  
+`Rprof()` keeps track of the function call stack at regularly sampled intervals and tablulates how much time is spent inside each function. By default, samples function call stack every 0.02 seconds.  
+Started by calling `Rprof()` function. 
+```{r, eval = FALSE}
+Rprof()
+```
+No other arguments needed. Default writes output to file called Rprof.out.  
+Once Rprof is called, everything you do from then will be measured by profiler. Therefore, you usually only want to run a single R function or expression and then immediately turn off. Too many function calls - results will be mixed together and you can't tell where bottlenecks are. `Rprof(NULL)` to turn off. 
+
+## Using `summaryRprof()`
+Tabluates R proiler output and calculates how much time is spent in which function. Two methods for normalizing data. 
+
+* "by.total" divides the time spent in each function by the total run time
+* "by.self" does the same as "by.total" but first subtracts out time spent in functions above the current function in the call stack. Author finds this more useful. 
+
+By total output initially shows 100% of time is spent in function but doesn't show that if function immediately calls another (like lm calls lm.fit()) then in reality most of time is spent in second function. By.self corrects this discrepancy. 
+
+# Simulation
+## Generating Random Numbers
+Simulation is an important topic for both stats and other areas where randomness is needed. Markhov chain Monte Carlo, boostrap, random forests, bagging. Sometimes you want to simulate a system and random number generation can be used to model random inputs.  
+R comes with a set of pseudo-random n umber generators to simulate from Normal, Poisson, and binomial.  
+
+* `rnorm`: generate random Normal variates with given mean and standard deviation. 
+* `dnorm`: evaluate the Normal probability density (with given mean/SD) at a point (or vector of points)
+* `pnorm`: evaluate the cumulative distribution function for a Normal distribution
+* `rpois`: Poisson variates at given rate. 
+
+For each probability distribution typicall 4 functions: "r", "d", "p", and "q". "r" simulates random numbers. Others: 
+
+* `d` for density
+* `r` for randon number generation
+* `p` for cumulative distribution
+* `p` for quantile function (inverse of cumulative distribution)
+
+If you're only interested in simulating random numbers, will likely only need 'r' function. However if you want to sample different distributions using something like rejection sampling, need other functions too.  
+Normal/Gaussian is most common. 
+```{r, eval = FALSE}
+dnorm(x, mean = 0, sd = 1, log = FALSE)
+pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
+qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
+rnorm(n, mean = 0, sd = 1)
+```
+Here simulate standard Normal random numbers with mean 0 and sd 1
+```{r}
+x <- rnorm(10)
+x
+```
+Modify default parameters: 
+```{r}4
+x <- rnorm(10, 20, 2)
+x
+summary(x)
+```
+If you want to know probability of random Normal variable being less than 2: 
+```{r}
+pnorm(2)
+```
+
+## Setting random number seed
+When simulating a set of random numbers, it is essential to set the *random number seed*. This ensures reproducibility of the sequence of random numbers.  
+```{r}
+set.seed(1)
+rnorm(5) 
+#calling rnorm again gets different set of 5
+rnorm(5)
+# resetting seed, gets same 5 again. 
+set.seed(1)
+rnorm(5)
+```
+In general, **always set the random number seed when conductiong a simulation**. Otherwise, you will not be able to reconstruct the same set of numbers.  
+Can generate numbers from other probability distributions like Poisson (model data in the form of counts).  
+```{r}
+rpois(10,1) #counts with a mean of 1
+rpois(10, 2) # counts with a mean of 2
+rpois(10, 20) # Counts with a mean of 20
+```
+
+## Simulating a Linear Model
+Simulating random numbers is useful, but sometimes we want to simulate values from a specific model. 
+Suppose we want to simulate from the following linear model: 
+$y = \beta + \beta x + \epsilon$
