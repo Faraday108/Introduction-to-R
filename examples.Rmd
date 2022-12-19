@@ -1662,4 +1662,4 @@ rpois(10, 20) # Counts with a mean of 20
 ## Simulating a Linear Model
 Simulating random numbers is useful, but sometimes we want to simulate values from a specific model. 
 Suppose we want to simulate from the following linear model: 
-$y = \beta + \beta x + \epsilon$
+$y = \beta_{0} + \beta_{1} x + \epsilon$
